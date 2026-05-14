@@ -76,15 +76,6 @@ Work is only complete when:
  - all checks pass (`typecheck`, `test`, `format`)
  - changes are consistent with the codebase
 
-# Tools
-
-You have access to the `bun run bulb` CLI:
- - Issues management:
-   - `bun run bulb issues` (list commands and usage)
-   - `next`, `start`, `done`, etc.
-
-Use it to track and update issue state as part of your workflow.
-
 # Code Style
 
  - Prefer full integration tests over unit tests
@@ -92,4 +83,29 @@ Use it to track and update issue state as part of your workflow.
  - Keep code simple, readable, and consistent
  - Avoid unnecessary abstractions
  - Favor explicitness over cleverness
+
+# Slate — Project Issue Tracking
+
+**NOTE: This project also IS slate. The project uses itself for issue tracking.**
+
+This project uses [Slate](https://github.com/) for issue tracking. Slate stores PRDs and tasks as git-tracked markdown files under `slate/`.
+
+**When to use Slate:** Anytime a task, issue, feature, or bug needs to be tracked — before writing code, during implementation, or when planning next steps. Use it to track and update issue state as part of your workflow.
+
+**How to learn Slate's commands:**
+
+```bash
+bunx slate overview
+```
+
+Run this command to get a full overview of available commands. The output includes examples for creating PRDs and tasks (including multi-line bodies via stdin), listing tasks, updating status, and finding the next actionable task.
+
+**Key workflow:**
+
+1. `bunx slate init` — Initialize the `slate/` directory if not already done.
+2. `bunx slate prd create --title "..."` — Create a PRD for the feature.
+3. `bunx slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
+4. `bunx slate plan` — Find the next actionable task.
+5. `bunx slate task update <id> --status in-progress` — When starting work.
+6. `bunx slate task update <id> --status done` — When finished.
 
