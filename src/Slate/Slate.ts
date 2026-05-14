@@ -69,9 +69,10 @@ export class Slate implements ISlate {
 		this.#store = new LocalFileStore(opts.dir);
 		this.#prds = new PRDService(this.#store);
 		const tasksResult = this.#store.listTasks();
-		const index = tasksResult.ok
-			? buildDependencyIndex(tasksResult.value)
-			: buildDependencyIndex([]);
+		if (!tasksResult.ok) {
+			throw new SlateConstructionError(mapTaskError(tasksResult.error));
+		}
+		const index = buildDependencyIndex(tasksResult.value);
 		this.#tasks = new TaskService(this.#store, index);
 	}
 
@@ -169,6 +170,28 @@ export class Slate implements ISlate {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SlateConstructionError — thrown when the Slate facade cannot initialize
+// ---------------------------------------------------------------------------
+
+/**
+ * Error thrown when the Slate facade cannot be constructed because the
+ * underlying store is in an invalid state (e.g. tasks cannot be listed).
+ *
+ * Unlike `SlateError` which is returned by individual operations, this is
+ * a thrown exception because a constructor failure means the entire facade
+ * is unusable — there is no `Result` to return.
+ */
+export class SlateConstructionError extends Error {
+	readonly kind: SlateError["kind"];
+
+	constructor(error: SlateError) {
+		super(`[slate] Failed to initialize: ${JSON.stringify(error)}`);
+		this.name = "SlateConstructionError";
+		this.kind = error.kind;
 	}
 }
 
