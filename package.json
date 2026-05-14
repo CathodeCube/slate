@@ -4,7 +4,7 @@
 	"type": "module",
 	"main": "./src/index.ts",
 	"bin": {
-		"slate": "./src/cli/run.ts"
+		"slate": "./src/cli/main.ts"
 	},
 	"exports": {
 		".": {
@@ -13,7 +13,7 @@
 		}
 	},
 	"scripts": {
-		"start": "bun run src/cli/run.ts",
+		"start": "bun run src/cli/main.ts",
 		"build": "bun build src/index.ts --outdir dist",
 		"typecheck": "tsc --noEmit",
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",

@@ -27,7 +27,7 @@ function runSlate(
 	// Redirect stderr to a temp file so error-path CLI output doesn't leak
 	// into test output. The file is read after the command completes.
 	const stderrFile = join(tmpdir(), "slate-test-stderr");
-	const cmd = `bun src/cli/run.ts ${escapedArgs.join(" ")} 2>${stderrFile}`;
+	const cmd = `bun src/cli/main.ts ${escapedArgs.join(" ")} 2>${stderrFile}`;
 	try {
 		const stdout = execSync(cmd, {
 			cwd,
