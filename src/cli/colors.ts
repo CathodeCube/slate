@@ -1,17 +1,16 @@
 /**
  * Minimal ANSI color helpers for CLI output.
  *
- * No external dependencies — uses terminal escape codes directly.
- * Colors are only applied when stdout/stderr is a TTY.
+ * No external dependencies. Colors are off by default for safety with
+ * agent output capture (pipes, subprocesses, log files).
+ *
+ * Enable colors by setting SLATE_COLOR=1 in the environment.
  */
 
 // ---------------------------------------------------------------------------
 // Color constants
 // ---------------------------------------------------------------------------
 
-/**
- * Terminal escape codes for colors.
- */
 const COLORS = {
 	reset: "\x1b[0m",
 	bold: "\x1b[1m",
@@ -24,68 +23,29 @@ const COLORS = {
 } as const;
 
 /**
- * Whether to apply colors. Only enabled when the output stream is a TTY.
+ * Whether to apply colors. Defaults to false.
+ * Set SLATE_COLOR=1 to enable.
  */
-let _shouldColor = true;
+let _shouldColor = false;
 
-try {
-	_shouldColor = process.stdout.isTTY === true;
-} catch {
-	_shouldColor = false;
+if (process.env.SLATE_COLOR === "1") {
+	_shouldColor = true;
 }
 
-/**
- * Reset the color.
- */
-export function reset(str: string): string {
-	return `${COLORS.reset}${str}${COLORS.reset}`;
+// ---------------------------------------------------------------------------
+// Color functions
+// ---------------------------------------------------------------------------
+
+function wrap(color: string): (str: string) => string {
+	return (str: string): string =>
+		_shouldColor ? `${color}${str}${COLORS.reset}` : str;
 }
 
-/**
- * Bold text.
- */
-export function bold(str: string): string {
-	return `${COLORS.bold}${str}${COLORS.reset}`;
-}
-
-/**
- * Red text (errors, failures).
- */
-export function red(str: string): string {
-	return `${COLORS.red}${str}${COLORS.reset}`;
-}
-
-/**
- * Green text (success, created, resolved).
- */
-export function green(str: string): string {
-	return `${COLORS.green}${str}${COLORS.reset}`;
-}
-
-/**
- * Yellow text (warnings, notes).
- */
-export function yellow(str: string): string {
-	return `${COLORS.yellow}${str}${COLORS.reset}`;
-}
-
-/**
- * Cyan text (labels, keys).
- */
-export function cyan(str: string): string {
-	return `${COLORS.cyan}${str}${COLORS.reset}`;
-}
-
-/**
- * Gray text (secondary info).
- */
-export function gray(str: string): string {
-	return `${COLORS.gray}${str}${COLORS.reset}`;
-}
-
-/**
- * Magenta text (highlights, IDs).
- */
-export function magenta(str: string): string {
-	return `${COLORS.magenta}${str}${COLORS.reset}`;
-}
+export const reset = wrap(COLORS.reset);
+export const bold = wrap(COLORS.bold);
+export const red = wrap(COLORS.red);
+export const green = wrap(COLORS.green);
+export const yellow = wrap(COLORS.yellow);
+export const cyan = wrap(COLORS.cyan);
+export const gray = wrap(COLORS.gray);
+export const magenta = wrap(COLORS.magenta);
