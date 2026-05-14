@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"target": "ES2022",
+		"module": "ES2022",
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"types": ["node", "vitest/globals"],
+		"paths": {
+			"src/*": ["./src/*"]
+		}
+	},
+	"include": ["src/**/*.ts", "test/**/*.ts"]
+}
