@@ -69,7 +69,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 1c | 🔴 Packaging | Add `engines.bun` field ✅ | **Blocking** | **Done** |
 | 2 | 🔴 Packaging | Add `license` field and LICENSE file ✅ | **Blocking** | **Done** |
 | 3 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** | |
-| 4 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) | **High** | |
+| 4 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) ✅ | **High** | **Done** |
 | 5 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** | |
 | 6 | 🟡 Docs | Add installation instructions to README | **High** | |
 | 7 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** | |

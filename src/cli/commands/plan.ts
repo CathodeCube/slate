@@ -41,6 +41,8 @@ function priorityKey(priority: string): number {
 // plan command
 // ---------------------------------------------------------------------------
 
+const DEFAULT_DIR = "./slate";
+
 /**
  * Create the `plan` CLI command.
  *
@@ -48,15 +50,13 @@ function priorityKey(priority: string): number {
  * dependencies are all satisfied. Tasks are sorted by priority (high →
  * medium → low) then by creation date.
  *
- * @param defaultDir - The default store directory path to use.
  * @returns The configured Commander command.
  */
-export function planCmd(defaultDir: string): Command {
+export function planCmd(): Command {
 	const cmd = new Command("plan");
 	cmd.description("Show the next actionable task");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (opts: { dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async () => {
+		const slate = createSlate(DEFAULT_DIR);
 
 		const listResult = slate.taskList();
 

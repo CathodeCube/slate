@@ -44,25 +44,25 @@ Creates:
 
 Manage Product Requirements Documents.
 
-    slate prd create --title "My Feature" [--priority high|medium|low] [--status todo|in-progress|done|blocked] [--dir <path>]
-    slate prd list [--dir <path>]
-    slate prd show <id> [--dir <path>]
+    slate prd create --title "My Feature" [--priority high|medium|low] [--status todo|in-progress|done|blocked]
+    slate prd list
+    slate prd show <id>
 
 ### slate task <subcommand>
 
 Manage tasks.
 
-    slate task create --title "Do something" --priority high [--prd <prd-id>] [--dir <path>]
-    slate task list [--status <status>] [--dir <path>]
-    slate task update <id> [--status <status>] [--priority <priority>] [--dir <path>]
-    slate task resolve <id> [--dir <path>]
-    slate task delete <id> [--dir <path>]
+    slate task create --title "Do something" --priority high [--prd <prd-id>]
+    slate task list [--status <status>]
+    slate task update <id> [--status <status>] [--priority <priority>]
+    slate task resolve <id>
+    slate task delete <id>
 
 ### slate plan
 
 Show the next actionable task (highest priority, all deps satisfied).
 
-    slate plan [--dir <path>]
+    slate plan
 
 ## Creating Tasks with EOF stdin
 

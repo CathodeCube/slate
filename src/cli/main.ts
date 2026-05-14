@@ -46,7 +46,7 @@ program.addCommand(initCmd(DEFAULT_STORE_DIR));
 program.addCommand(overviewCmd(DEFAULT_STORE_DIR));
 
 // -- plan command ---------------------------------------------------------
-program.addCommand(planCmd(DEFAULT_STORE_DIR));
+program.addCommand(planCmd());
 
 // -- prd subcommand -------------------------------------------------------
 const prdCmd = new Command("prd");
