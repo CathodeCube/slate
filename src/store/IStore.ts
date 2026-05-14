@@ -1,4 +1,4 @@
-import type { PRD, PRDError } from "src/prd/types";
+import type { PRD, PRDError, Task, TaskError } from "src/prd/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
@@ -34,4 +34,26 @@ export interface IStore {
 	 * Generate the next sequential PRD ID.
 	 */
 	nextPRDId(): string;
+
+	// -- Task operations ------------------------------------------------------
+
+	/**
+	 * Create a task file in the store.
+	 */
+	createTask(task: Task): Result<void, TaskError>;
+
+	/**
+	 * Read a task file from the store.
+	 */
+	readTask(id: string): Result<Task, TaskError>;
+
+	/**
+	 * Read all task files from the store.
+	 */
+	listTasks(): Result<Task[], TaskError>;
+
+	/**
+	 * Generate the next sequential task ID.
+	 */
+	nextTaskId(): string;
 }
