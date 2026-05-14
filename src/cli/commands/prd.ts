@@ -3,15 +3,6 @@ import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
 
 // ---------------------------------------------------------------------------
-// PRD command handlers
-// ---------------------------------------------------------------------------
-
-/**
- * Default store directory used by CLI commands.
- */
-const _DEFAULT_STORE_DIR = "./slate";
-
-// ---------------------------------------------------------------------------
 // prd list
 // ---------------------------------------------------------------------------
 

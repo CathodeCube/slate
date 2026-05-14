@@ -1,7 +1,61 @@
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { execSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 import type { Result } from "src/utils/result";
+
+// ---------------------------------------------------------------------------
+// CLI helpers
+// ---------------------------------------------------------------------------
+
+/** Absolute path to the Slate CLI entry point. */
+const CLI_PATH = resolve(import.meta.dirname, "..", "src", "cli", "main.ts");
+
+// ---------------------------------------------------------------------------
+// CLI helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Run the Slate CLI as a subprocess and return stdout + stderr.
+ */
+export function runSlate(
+	args: string[],
+	opts?: { cwd?: string },
+): {
+	stdout: string;
+	stderr: string;
+	exitCode: number;
+} {
+	const cwd = opts?.cwd ?? process.cwd();
+	const escapedArgs = args.map((a) => (a.includes(" ") ? `"${a}"` : a));
+	const stderrFile = join(tmpdir(), "slate-test-stderr");
+	const cmd = `bun ${CLI_PATH} ${escapedArgs.join(" ")} 2>${stderrFile}`;
+	try {
+		const stdout = execSync(cmd, {
+			cwd,
+			encoding: "utf-8",
+			timeout: 10000,
+		});
+		if (existsSync(stderrFile)) {
+			unlinkSync(stderrFile);
+		}
+		return { stdout, stderr: "", exitCode: 0 };
+	} catch (e: unknown) {
+		const err = e as { stdout?: Buffer; stderr?: Buffer; status?: number };
+		const stderr = existsSync(stderrFile)
+			? readFileSync(stderrFile, "utf-8").trim()
+			: "";
+		if (existsSync(stderrFile)) {
+			unlinkSync(stderrFile);
+		}
+		return {
+			stdout: (err.stdout?.toString() ?? "").trim(),
+			stderr,
+			exitCode: err.status ?? 1,
+		};
+	}
+}
 
 // ---------------------------------------------------------------------------
 // Test directory helpers

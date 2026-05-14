@@ -1,58 +1,8 @@
-import { execSync } from "node:child_process";
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
-import { assertOk, createTestDir } from "../utils";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Run the Slate CLI as a subprocess and return stdout + stderr.
- * stderr is captured via a temp file so it doesn't leak into test output.
- */
-function runSlate(
-	args: string[],
-	opts?: { cwd?: string },
-): {
-	stdout: string;
-	stderr: string;
-	exitCode: number;
-} {
-	const cwd = opts?.cwd ?? process.cwd();
-	const escapedArgs = args.map((a) => (a.includes(" ") ? `"${a}"` : a));
-	// Redirect stderr to a temp file so error-path CLI output doesn't leak
-	// into test output. The file is read after the command completes.
-	const stderrFile = join(tmpdir(), "slate-test-stderr");
-	const cmd = `bun src/cli/main.ts ${escapedArgs.join(" ")} 2>${stderrFile}`;
-	try {
-		const stdout = execSync(cmd, {
-			cwd,
-			encoding: "utf-8",
-			timeout: 10000,
-		});
-		if (existsSync(stderrFile)) {
-			unlinkSync(stderrFile);
-		}
-		return { stdout, stderr: "", exitCode: 0 };
-	} catch (e: unknown) {
-		const err = e as { stdout?: Buffer; stderr?: Buffer; status?: number };
-		const stderr = existsSync(stderrFile)
-			? readFileSync(stderrFile, "utf-8").trim()
-			: "";
-		if (existsSync(stderrFile)) {
-			unlinkSync(stderrFile);
-		}
-		return {
-			stdout: (err.stdout?.toString() ?? "").trim(),
-			stderr,
-			exitCode: err.status ?? 1,
-		};
-	}
-}
+import { assertOk, createTestDir, runSlate } from "../utils";
 
 // ---------------------------------------------------------------------------
 // CLI task list
@@ -734,5 +684,76 @@ describe("CLI plan", () => {
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain("Active task");
 		expect(stdout).not.toContain("Done task");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// CLI slate init
+// ---------------------------------------------------------------------------
+
+describe("CLI slate init", () => {
+	it("creates prds and tasks directories", async () => {
+		const { existsSync } = await import("node:fs");
+		const { join } = await import("node:path");
+
+		const storeDir = createTestDir();
+
+		const { stdout, exitCode } = runSlate(["init"], { cwd: storeDir });
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Created: slate/prds");
+		expect(stdout).toContain("Created: slate/tasks");
+		expect(stdout).toContain("Slate initialized at ./slate");
+
+		expect(existsSync(join(storeDir, "slate", "prds"))).toBe(true);
+		expect(existsSync(join(storeDir, "slate", "tasks"))).toBe(true);
+	});
+
+	it("does not recreate existing directories", async () => {
+		const { readdirSync } = await import("node:fs");
+
+		const storeDir = createTestDir();
+
+		// First init
+		const first = runSlate(["init"], { cwd: storeDir });
+		expect(first.exitCode).toBe(0);
+
+		// Second init — should say "Exists" not "Created"
+		const second = runSlate(["init"], { cwd: storeDir });
+		expect(second.exitCode).toBe(0);
+		expect(second.stdout).toContain("Exists:  slate/prds");
+		expect(second.stdout).toContain("Exists:  slate/tasks");
+
+		// Verify only one copy of each dir
+		expect(readdirSync(join(storeDir, "slate")).sort()).toEqual([
+			"prds",
+			"tasks",
+		]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// CLI slate overview
+// ---------------------------------------------------------------------------
+
+describe("CLI slate overview", () => {
+	it("prints agent-friendly overview", () => {
+		const { stdout, exitCode } = runSlate(["overview"]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Slate CLI");
+		expect(stdout).toContain("slate init");
+		expect(stdout).toContain("slate prd");
+		expect(stdout).toContain("slate task");
+		expect(stdout).toContain("slate plan");
+		expect(stdout).toContain("slate task create");
+		expect(stdout).toContain("EOF");
+		expect(stdout).toContain("Common Patterns");
+	});
+
+	it("shows how to use task create with EOF stdin", () => {
+		const { stdout } = runSlate(["overview"]);
+		expect(stdout).toContain("<<EOF");
+		expect(stdout).toContain("EOF");
 	});
 });

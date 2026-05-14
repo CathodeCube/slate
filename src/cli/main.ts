@@ -8,6 +8,8 @@
  */
 
 import { Command } from "commander";
+import { initCmd } from "src/cli/commands/init";
+import { overviewCmd } from "src/cli/commands/overview";
 import { planCmd } from "src/cli/commands/plan";
 import { prdCreateCmd, prdListCmd, prdShowCmd } from "src/cli/commands/prd";
 import {
@@ -36,6 +38,12 @@ program
 	.name("slate")
 	.description("A minimal, agent-native issue tracker")
 	.version("0.0.1");
+
+// -- init command ---------------------------------------------------------
+program.addCommand(initCmd(DEFAULT_STORE_DIR));
+
+// -- overview command -----------------------------------------------------
+program.addCommand(overviewCmd(DEFAULT_STORE_DIR));
 
 // -- plan command ---------------------------------------------------------
 program.addCommand(planCmd(DEFAULT_STORE_DIR));
