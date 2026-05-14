@@ -6,6 +6,7 @@
  * → low) then by creation date.
  */
 import { Command } from "commander";
+import { handleError } from "src/cli/error";
 import { createSlate } from "src/Slate/factory";
 import { buildDependencyIndex } from "src/task/DependencyIndex";
 
@@ -61,10 +62,7 @@ export function planCmd(): Command {
 		const listResult = slate.taskList();
 
 		if (!listResult.ok) {
-			process.stderr.write(
-				`Error: Failed to list tasks: ${listResult.error.kind}\n`,
-			);
-			process.exit(1);
+			handleError(listResult.error);
 		}
 
 		const allTasks = listResult.value;

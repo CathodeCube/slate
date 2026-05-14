@@ -4,6 +4,7 @@
  * Exports: `prdListCmd`, `prdShowCmd`, `prdCreateCmd`.
  */
 import { Command } from "commander";
+import { handleError } from "src/cli/error";
 import { createSlate } from "src/Slate/factory";
 
 // ---------------------------------------------------------------------------
@@ -27,10 +28,7 @@ export function prdListCmd(defaultDir: string): Command {
 		const listResult = slate.prdList();
 
 		if (!listResult.ok) {
-			process.stderr.write(
-				`Error: Failed to list PRDs: ${listResult.error.kind}\n`,
-			);
-			process.exit(1);
+			handleError(listResult.error);
 		}
 
 		const prds = listResult.value;
@@ -71,22 +69,7 @@ export function prdShowCmd(defaultDir: string): Command {
 		const result = slate.prdRead(id);
 
 		if (!result.ok) {
-			switch (result.error.kind) {
-				case "prd-not-found":
-					process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
-					break;
-				case "prd-corrupted-file":
-					process.stderr.write(
-						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-					);
-					break;
-				default:
-					process.stderr.write(
-						`Error: Unknown PRD error: ${(result.error as { kind: string }).kind}\n`,
-					);
-					break;
-			}
-			process.exit(1);
+			handleError(result.error);
 		}
 
 		const prd = result.value;
@@ -137,37 +120,7 @@ export function prdCreateCmd(defaultDir: string): Command {
 		});
 
 		if (!result.ok) {
-			switch (result.error.kind) {
-				case "prd-invalid-title":
-					process.stderr.write(`Error: ${result.error.message}\n`);
-					break;
-				case "prd-invalid-status":
-					process.stderr.write(
-						`Error: Invalid status ${result.error.status}\n`,
-					);
-					break;
-				case "prd-corrupted-file":
-					process.stderr.write(
-						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-					);
-					break;
-				case "prd-already-exists":
-					process.stderr.write(
-						`Error: PRD ${result.error.id} already exists\n`,
-					);
-					break;
-				case "prd-directory-invalid":
-					process.stderr.write(
-						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
-					);
-					break;
-				default:
-					process.stderr.write(
-						`Error: Unknown PRD error: ${(result.error as { kind: string }).kind}\n`,
-					);
-					break;
-			}
-			process.exit(1);
+			handleError(result.error);
 		}
 
 		console.log(`Created PRD: ${result.value.id} — ${result.value.title}`);

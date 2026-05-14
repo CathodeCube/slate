@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { Command } from "commander";
+import { handleError } from "src/cli/error";
 import { readStdin } from "src/cli/stdin";
 import { createSlate } from "src/Slate/factory";
 
@@ -36,10 +37,7 @@ export function taskListCmd(defaultDir: string): Command {
 		const listResult = slate.taskList();
 
 		if (!listResult.ok) {
-			process.stderr.write(
-				`Error: Failed to list tasks: ${listResult.error.kind}\n`,
-			);
-			process.exit(1);
+			handleError(listResult.error);
 		}
 
 		let tasks = listResult.value;
@@ -120,47 +118,7 @@ export function taskUpdateCmd(defaultDir: string): Command {
 			const result = slate.taskUpdate(id, updates);
 
 			if (!result.ok) {
-				switch (result.error.kind) {
-					case "task-not-found":
-						process.stderr.write(`Error: Task ${result.error.id} not found\n`);
-						break;
-					case "task-invalid-status":
-						process.stderr.write(
-							`Error: Invalid status ${result.error.status}\n`,
-						);
-						break;
-					case "task-invalid-priority":
-						process.stderr.write(
-							`Error: Invalid priority ${result.error.priority}\n`,
-						);
-						break;
-					case "task-corrupted-file":
-						process.stderr.write(
-							`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-						);
-						break;
-					case "task-already-exists":
-						process.stderr.write(
-							`Error: Task ${result.error.id} already exists\n`,
-						);
-						break;
-					case "task-already-done":
-						process.stderr.write(
-							`Error: Task ${result.error.id} is already done\n`,
-						);
-						break;
-					case "task-directory-invalid":
-						process.stderr.write(
-							`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
-						);
-						break;
-					default:
-						process.stderr.write(
-							`Error: Unknown task error: ${(result.error as { kind: string }).kind}\n`,
-						);
-						break;
-				}
-				process.exit(1);
+				handleError(result.error);
 			}
 
 			console.log(`Updated task: ${id}`);
@@ -211,45 +169,7 @@ export function taskCreateCmd(defaultDir: string): Command {
 		});
 
 		if (!result.ok) {
-			switch (result.error.kind) {
-				case "task-invalid-title":
-					process.stderr.write(`Error: ${result.error.message}\n`);
-					break;
-				case "task-invalid-status":
-					process.stderr.write(
-						`Error: Invalid status ${result.error.status}\n`,
-					);
-					break;
-				case "task-invalid-priority":
-					process.stderr.write(
-						`Error: Invalid priority ${result.error.priority}\n`,
-					);
-					break;
-				case "task-not-found":
-					process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
-					break;
-				case "task-corrupted-file":
-					process.stderr.write(
-						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-					);
-					break;
-				case "task-already-exists":
-					process.stderr.write(
-						`Error: Task ${result.error.id} already exists\n`,
-					);
-					break;
-				case "task-directory-invalid":
-					process.stderr.write(
-						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
-					);
-					break;
-				default:
-					process.stderr.write(
-						`Error: Unknown task error: ${(result.error as { kind: string }).kind}\n`,
-					);
-					break;
-			}
-			process.exit(1);
+			handleError(result.error);
 		}
 
 		// Write body to the task file if stdin was provided
@@ -288,37 +208,7 @@ export function taskResolveCmd(defaultDir: string): Command {
 		const result = slate.taskResolve(id);
 
 		if (!result.ok) {
-			switch (result.error.kind) {
-				case "task-not-found":
-					process.stderr.write(`Error: Task ${result.error.id} not found\n`);
-					break;
-				case "task-already-done":
-					process.stderr.write(
-						`Error: Task ${result.error.id} is already done\n`,
-					);
-					break;
-				case "task-corrupted-file":
-					process.stderr.write(
-						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-					);
-					break;
-				case "task-already-exists":
-					process.stderr.write(
-						`Error: Task ${result.error.id} already exists\n`,
-					);
-					break;
-				case "task-directory-invalid":
-					process.stderr.write(
-						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
-					);
-					break;
-				default:
-					process.stderr.write(
-						`Error: Unknown task error: ${(result.error as { kind: string }).kind}\n`,
-					);
-					break;
-			}
-			process.exit(1);
+			handleError(result.error);
 		}
 
 		const unblocked = result.value.unblocked;
@@ -352,32 +242,7 @@ export function taskDeleteCmd(defaultDir: string): Command {
 		const result = slate.taskDelete(id);
 
 		if (!result.ok) {
-			switch (result.error.kind) {
-				case "task-not-found":
-					process.stderr.write(`Error: Task ${result.error.id} not found\n`);
-					break;
-				case "task-corrupted-file":
-					process.stderr.write(
-						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
-					);
-					break;
-				case "task-already-exists":
-					process.stderr.write(
-						`Error: Task ${result.error.id} already exists\n`,
-					);
-					break;
-				case "task-directory-invalid":
-					process.stderr.write(
-						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
-					);
-					break;
-				default:
-					process.stderr.write(
-						`Error: Unknown task error: ${(result.error as { kind: string }).kind}\n`,
-					);
-					break;
-			}
-			process.exit(1);
+			handleError(result.error);
 		}
 
 		console.log(`Deleted task: ${id}`);
