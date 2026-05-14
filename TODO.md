@@ -86,3 +86,81 @@ The project is **not yet ready for a proper first release**, but the foundation 
 ## Verdict
 
 The **core design is sound** — the architecture, error handling, and code style are all production-quality. The gaps are primarily in the **packaging layer** (which makes it unusable as an npm package) and **feature completeness** (PRD updates, consistent `--dir` support). If the blocking and high-priority items are addressed, this is ready for a `0.1.0` first stable release.
+
+---
+
+## Recommendations for npm Publication
+
+After a thorough evaluation of every source file, test, configuration, and documentation file, the project is **not yet ready for npm publication — but close.** The core library and CLI are well-architected, thoroughly tested (142 passing tests), and the code quality is high. However, several issues must be addressed before shipping.
+
+### 🔴 Blocking (Must Fix Before Publishing)
+
+1. **`bin` field points to a `.ts` source file.** `"bin": { "slate": "./src/cli/main.ts" }` will only work for consumers with Bun installed. Node.js users will get `bad interpreter` errors. Either compile the CLI to JS via a `prepublishOnly` script, or explicitly document that Slate is Bun-only.
+
+2. **`main` and `exports` point to `.ts` files.** `"main": "./src/index.ts"` works for Bun (which natively resolves TypeScript) but **Node.js will fail to import `.ts` files**. This is effectively a Bun-only package, and that constraint must be explicit.
+
+3. **Bun-only constraint not documented.** Consumers using Node.js will hit import resolution errors. The README must clearly state that Slate requires Bun.
+
+### 🟡 High-Priority
+
+4. **`colors.ts` uses `require("node:tty")`** — this violates the project's own code style rule ("Always use `import()` over `require()"`). The Node.js fallback is dead code for a Bun-only package. Use `await import("node:tty")` or `process.stdout.isTTY` and remove the dead code path.
+
+5. **`taskCreateCmd` body-write is fragile.** The CLI reads the newly-created task file, appends stdin body, and writes it back — with no error handling. If the file doesn't exist (race condition, permissions), this throws synchronously. Same issue in `taskResolveCmd`.
+
+6. **No `CHANGELOG.md`.** Important for any package with consumers.
+
+### 🟢 Medium-Priority
+
+7. **`taskUpdate` doesn't rebuild the dependency index.** Changes to task status won't be reflected until a subsequent `taskResolve` call rebuilds it. This works because `taskResolve` rebuilds from the store, but any code that checks the index directly after `taskUpdate` would see stale data.
+
+8. **Sequential ID generation is a collision risk.** `nextSequentialID` scans files and picks max + 1. Concurrent processes could generate the same ID. The `already-exists` error handles this at write time, but the second caller gets a silent error with no guidance.
+
+9. **`SlateConstructionError` breaks the "no throw" principle.** The constructor throws an exception — the one place in the entire codebase that does so. Arguably justified (constructors can't return `Result`), but worth documenting as a deliberate exception.
+
+10. **No CI/CD configuration.** No `.github/workflows/` for automated testing on PRs.
+
+### 🟢 Low-Priority / Design Observations
+
+11. **`overviewCmd` embeds documentation as a template literal.** Fragile and hard to maintain. Consider generating programmatically from Commander metadata.
+
+12. **PRD status is computed at read time, not persisted.** Reading a PRD is O(n) over all tasks. There's no way to query "PRDs that are done" without reading every PRD.
+
+13. **`init` creates `./slate` relative to CWD.** Running from a subdirectory puts the store in an unexpected location. This is by design but worth documenting more prominently.
+
+14. **No `--dir` override.** Users can't specify a custom store directory from the CLI.
+
+---
+
+## Summary Scorecard
+
+| Category | Status | Details |
+|----------|--------|---------|
+| **Architecture** | ✅ Excellent | Clean separation, dependency injection, Result pattern |
+| **Type Safety** | ✅ Excellent | Strict TS, Zod validation, discriminated unions |
+| **Tests** | ✅ Excellent | 142 passing, integration-first, good coverage |
+| **Documentation** | ⚠️ Good | README, CONTEXT, CONTRIBUTING present but npm-specific info missing |
+| **Packaging** | 🔴 Incomplete | Bun-only constraint not documented; `bin` points to `.ts` |
+| **License** | ✅ Done | LICENSE file present, `package.json` declares Apache-2.0 |
+| **Error Handling** | ⚠️ Mostly good | Constructor throws (by necessity), CLI uses `process.exit(1)` directly |
+| **Edge Cases** | ⚠️ Some gaps | Concurrent ID generation, stale index after `taskUpdate`, body-write fragility |
+| **Publishing** | 🔴 Not ready | Bun-only but not documented; Node.js consumers will fail |
+
+---
+
+## Pre-Publishing Checklist
+
+- [ ] Document Bun-only constraint prominently in README
+- [ ] Add `package.json` `engines` field with Bun version constraint (already done, verify)
+- [ ] Fix `colors.ts` — remove dead `require("node:tty")` code path
+- [ ] Add error handling around body-write in `taskCreateCmd` and file-read in `taskResolveCmd`
+- [ ] Add `CHANGELOG.md`
+- [ ] Decide: compile CLI for Node.js compatibility OR embrace Bun-only fully
+- [ ] Add CI/CD configuration (`.github/workflows/`)
+- [ ] Run `bun run typecheck && bun run test && bun run format` and verify all pass
+- [ ] Publish to npm
+
+---
+
+## Final Verdict
+
+The **code itself is production-quality** — the architecture, error handling, and test coverage are all excellent. The remaining gaps are primarily in the **packaging and distribution layer**: making it clear this is a Bun-only package, ensuring the CLI entry point works for the intended audience, and adding publishing infrastructure (changelog, CI). Once these are addressed, Slate is ready for its first stable release.
