@@ -1,5 +1,5 @@
 {
-	"name": "slate",
+	"name": "@cathodecube/slate",
 	"version": "0.0.1",
 	"type": "module",
 	"main": "./src/index.ts",
@@ -22,7 +22,20 @@
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",
 		"test": "vitest run"
 	},
+	"description": "A minimal, agent-native issue tracker for local projects",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/cathodecube/slate.git"
+	},
+	"bugs": {
+		"url": "https://github.com/cathodecube/slate/issues"
+	},
+	"homepage": "https://github.com/cathodecube/slate#readme",
+	"author": "Cathode Cube (https://cathodecube.com)",
 	"license": "Apache-2.0",
+	"publishConfig": {
+		"access": "public"
+	},
 	"engines": {
 		"bun": ">=1.0.0"
 	},

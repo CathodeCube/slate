@@ -18,7 +18,7 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 > **Bun-only.** Slate requires Bun to run. It uses native Bun TypeScript resolution and does not support Node.js. Install [Bun](https://bun.sh/) (v1.0.0 or later) before proceeding.
 
 - Install [Bun](https://bun.sh/) (latest stable)
-- Install slate globally with: `bun add -g slate`
+- Install slate globally with: `bun add -g @cathodecube/slate`
 - Tell your agent about Slate (More information below)
 
 #### Configuring Your Agent
@@ -117,7 +117,7 @@ slate task update <task-id> --status done
 Slate exposes a library for programmatic access, enabling agentic harness extensions to call it directly:
 
 ```typescript
-import { Slate } from "slate";
+import { Slate } from "@cathodecube/slate";
 
 const slate = new Slate({ dir: "./slate" });
 
