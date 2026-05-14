@@ -3,6 +3,9 @@
   "workspaces": {
     "": {
       "name": "orca",
+      "dependencies": {
+        "commander": "^14.0.3",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.4.14",
         "bulb": "git@github.com:CathodeCube/bulb.git",
