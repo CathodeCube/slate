@@ -76,7 +76,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 8 | 🟡 Docs | Add CONTRIBUTING.md | **Medium** | |
 | 9 | 🟡 Robustness | Surface errors from corrupted files instead of silent skip | **Medium** | |
 | 10 | 🟡 Robustness | Handle constructor failure in `Slate` facade (propagate or throw) | **Medium** | |
-| 11 | 🟢 Polish | Add `--version` to Commander | Low | |
+| 11 | 🟢 Polish | Add `--version` to Commander ✅ | Low | **Done** |
 | 12 | 🟢 Polish | Centralize error output / exit codes in CLI | Low | |
 | 13 | 🟢 Polish | Remove `detect-cycle.ts` dead code ✅ | Low | **Done** |
 | 14 | 🟢 Polish | Add colored output to CLI (chalk or similar) | Low | |
