@@ -12,9 +12,12 @@
 			"import": "./src/index.ts"
 		}
 	},
+	"files": [
+		"src",
+		"README.md"
+	],
 	"scripts": {
 		"start": "bun run src/cli/main.ts",
-		"build": "bun build src/index.ts --outdir dist",
 		"typecheck": "tsc --noEmit",
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",
 		"test": "vitest run"

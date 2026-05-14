@@ -64,7 +64,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 
 | # | Category | Item | Priority | Status |
 |---|----------|------|----------|--------|
-| 1 | 🔴 Packaging | Add `files` field to `package.json`, add `prepare`/`prepublishOnly` build script, fix or remove `bin` entry | **Blocking** | |
+| 1 | 🔴 Packaging | Add `files` field to `package.json` ✅ | **Blocking** | **Done** |
 | 1b | 🔴 Packaging | Remove `bulb` git dependency ✅ | **Blocking** | **Done** |
 | 1c | 🔴 Packaging | Add `engines.bun` field ✅ | **Blocking** | **Done** |
 | 2 | 🔴 Packaging | Add `license` field and LICENSE file | **Blocking** | |
