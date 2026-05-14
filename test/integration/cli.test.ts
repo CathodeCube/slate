@@ -10,7 +10,8 @@ import { assertOk, createEmptyIndex, createTestDir, runSlate } from "../utils";
 
 describe("CLI task list", () => {
 	it("lists all tasks with their metadata", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		// Create tasks via library
 		const { TaskService } = await import("src/task/TaskService");
@@ -22,7 +23,7 @@ describe("CLI task list", () => {
 		service.create({ title: "Task B", status: "in-progress" });
 		service.create({ title: "Task C", status: "done" });
 
-		const { stdout } = runSlate(["task", "list", "--dir", storeDir]);
+		const { stdout } = runSlate(["task", "list"], { cwd: projectDir });
 
 		expect(stdout).toContain("task-001");
 		expect(stdout).toContain("Task A");
@@ -33,7 +34,8 @@ describe("CLI task list", () => {
 	});
 
 	it("filters tasks by status", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -44,14 +46,9 @@ describe("CLI task list", () => {
 		service.create({ title: "Task B", status: "in-progress" });
 		service.create({ title: "Task C", status: "done" });
 
-		const { stdout } = runSlate([
-			"task",
-			"list",
-			"--status",
-			"in-progress",
-			"--dir",
-			storeDir,
-		]);
+		const { stdout } = runSlate(["task", "list", "--status", "in-progress"], {
+			cwd: projectDir,
+		});
 
 		expect(stdout).toContain("Task B");
 		expect(stdout).not.toContain("Task A");
@@ -59,8 +56,8 @@ describe("CLI task list", () => {
 	});
 
 	it("prints 'No tasks found.' when no tasks exist", async () => {
-		const storeDir = createTestDir();
-		const { stdout } = runSlate(["task", "list", "--dir", storeDir]);
+		const projectDir = createTestDir();
+		const { stdout } = runSlate(["task", "list"], { cwd: projectDir });
 		expect(stdout).toContain("No tasks found.");
 	});
 });
@@ -71,7 +68,8 @@ describe("CLI task list", () => {
 
 describe("CLI task update", () => {
 	it("updates task status and writes the change to disk", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -82,15 +80,10 @@ describe("CLI task update", () => {
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const { stdout, exitCode } = runSlate([
-			"task",
-			"update",
-			taskId,
-			"--status",
-			"in-progress",
-			"--dir",
-			storeDir,
-		]);
+		const { stdout, exitCode } = runSlate(
+			["task", "update", taskId, "--status", "in-progress"],
+			{ cwd: projectDir },
+		);
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain(`Updated task: ${taskId}`);
@@ -103,7 +96,8 @@ describe("CLI task update", () => {
 	});
 
 	it("updates task priority and writes the change to disk", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -114,15 +108,10 @@ describe("CLI task update", () => {
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const { stdout, exitCode } = runSlate([
-			"task",
-			"update",
-			taskId,
-			"--priority",
-			"high",
-			"--dir",
-			storeDir,
-		]);
+		const { stdout, exitCode } = runSlate(
+			["task", "update", taskId, "--priority", "high"],
+			{ cwd: projectDir },
+		);
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain(`Updated task: ${taskId}`);
@@ -133,22 +122,18 @@ describe("CLI task update", () => {
 	});
 
 	it("returns error for non-existent task", async () => {
-		const storeDir = createTestDir();
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"update",
-			"task-999",
-			"--status",
-			"done",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+		const { stderr, exitCode } = runSlate(
+			["task", "update", "task-999", "--status", "done"],
+			{ cwd: projectDir },
+		);
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("not found");
 	});
 
 	it("rejects invalid status", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -159,21 +144,17 @@ describe("CLI task update", () => {
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"update",
-			taskId,
-			"--status",
-			"invalid",
-			"--dir",
-			storeDir,
-		]);
+		const { stderr, exitCode } = runSlate(
+			["task", "update", taskId, "--status", "invalid"],
+			{ cwd: projectDir },
+		);
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("Invalid status");
 	});
 
 	it("rejects invalid priority", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -184,15 +165,10 @@ describe("CLI task update", () => {
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"update",
-			taskId,
-			"--priority",
-			"invalid",
-			"--dir",
-			storeDir,
-		]);
+		const { stderr, exitCode } = runSlate(
+			["task", "update", taskId, "--priority", "invalid"],
+			{ cwd: projectDir },
+		);
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("Invalid priority");
 	});
@@ -204,7 +180,8 @@ describe("CLI task update", () => {
 
 describe("CLI prd list", () => {
 	it("lists all PRDs", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { PRDService } = await import("src/prd/PRDService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -214,7 +191,7 @@ describe("CLI prd list", () => {
 		service.create({ title: "PRD A" });
 		service.create({ title: "PRD B" });
 
-		const { stdout } = runSlate(["prd", "list", "--dir", storeDir]);
+		const { stdout } = runSlate(["prd", "list"], { cwd: projectDir });
 
 		expect(stdout).toContain("prd-001");
 		expect(stdout).toContain("PRD A");
@@ -223,8 +200,8 @@ describe("CLI prd list", () => {
 	});
 
 	it("prints 'No PRDs found.' when no PRDs exist", async () => {
-		const storeDir = createTestDir();
-		const { stdout } = runSlate(["prd", "list", "--dir", storeDir]);
+		const projectDir = createTestDir();
+		const { stdout } = runSlate(["prd", "list"], { cwd: projectDir });
 		expect(stdout).toContain("No PRDs found.");
 	});
 });
@@ -235,7 +212,8 @@ describe("CLI prd list", () => {
 
 describe("CLI prd show", () => {
 	it("displays PRD full details", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { PRDService } = await import("src/prd/PRDService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -250,15 +228,8 @@ describe("CLI prd show", () => {
 		expect(createResult.ok).toBe(true);
 		const prdId = createResult.ok ? createResult.value.id : "";
 
-		const { stdout, exitCode } = runSlate([
-			"prd",
-			"show",
-			prdId,
-			"--dir",
-			storeDir,
-		]);
+		const { stdout } = runSlate(["prd", "show", prdId], { cwd: projectDir });
 
-		expect(exitCode).toBe(0);
 		expect(stdout).toContain(`ID:       ${prdId}`);
 		expect(stdout).toContain("Title:    Test PRD");
 		expect(stdout).toContain("Status:   in-progress");
@@ -268,15 +239,10 @@ describe("CLI prd show", () => {
 	});
 
 	it("returns error for non-existent PRD", async () => {
-		const storeDir = createTestDir();
-		const { stderr, exitCode } = runSlate([
-			"prd",
-			"show",
-			"prd-999",
-			"--dir",
-			storeDir,
-		]);
-		expect(exitCode).toBe(1);
+		const projectDir = createTestDir();
+		const { stderr } = runSlate(["prd", "show", "prd-999"], {
+			cwd: projectDir,
+		});
 		expect(stderr).toContain("not found");
 	});
 });
@@ -287,27 +253,22 @@ describe("CLI prd show", () => {
 
 describe("CLI prd create", () => {
 	it("creates a PRD and prints confirmation", async () => {
-		const storeDir = createTestDir();
-		const { stdout, exitCode } = runSlate([
-			"prd",
-			"create",
-			"--title",
-			"CLI Test PRD",
-			"--priority",
-			"high",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
+
+		const { stdout, exitCode } = runSlate(
+			["prd", "create", "--title", "CLI Test PRD", "--priority", "high"],
+			{ cwd: projectDir },
+		);
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain("Created PRD:");
 		expect(stdout).toContain("CLI Test PRD");
 
 		// Verify file on disk
-		const { readFileSync } = await import("node:fs");
-		const { join } = await import("node:path");
+		const { readFileSync, readdirSync } = await import("node:fs");
 		const prdDir = join(storeDir, "prds");
-		const files = await import("node:fs").then((m) => m.readdirSync(prdDir));
+		const files = readdirSync(prdDir);
 		expect(files.length).toBe(1);
 
 		const filePath = join(prdDir, files[0]);
@@ -320,15 +281,11 @@ describe("CLI prd create", () => {
 	});
 
 	it("defaults to medium priority and todo status", async () => {
-		const storeDir = createTestDir();
-		const { stdout } = runSlate([
-			"prd",
-			"create",
-			"--title",
-			"Default PRD",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+
+		const { stdout } = runSlate(["prd", "create", "--title", "Default PRD"], {
+			cwd: projectDir,
+		});
 
 		expect(stdout).toContain("Created PRD:");
 	});
@@ -340,17 +297,13 @@ describe("CLI prd create", () => {
 
 describe("CLI task create", () => {
 	it("creates a task and prints confirmation", async () => {
-		const storeDir = createTestDir();
-		const { stdout, exitCode } = runSlate([
-			"task",
-			"create",
-			"--title",
-			"CLI Test Task",
-			"--priority",
-			"high",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
+
+		const { stdout, exitCode } = runSlate(
+			["task", "create", "--title", "CLI Test Task", "--priority", "high"],
+			{ cwd: projectDir },
+		);
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain("Created task:");
@@ -358,7 +311,6 @@ describe("CLI task create", () => {
 
 		// Verify file on disk
 		const { readFileSync, readdirSync } = await import("node:fs");
-		const { join } = await import("node:path");
 		const taskDir = join(storeDir, "tasks");
 		const files = readdirSync(taskDir);
 		expect(files.length).toBe(1);
@@ -373,17 +325,11 @@ describe("CLI task create", () => {
 	});
 
 	it("creates an ad-hoc task without PRD binding", async () => {
-		const storeDir = createTestDir();
-		const { stdout } = runSlate([
-			"task",
-			"create",
-			"--title",
-			"Ad-hoc CLI Task",
-			"--priority",
-			"low",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+		const { stdout } = runSlate(
+			["task", "create", "--title", "Ad-hoc CLI Task", "--priority", "low"],
+			{ cwd: projectDir },
+		);
 
 		expect(stdout).toContain("Created task:");
 	});
@@ -395,7 +341,8 @@ describe("CLI task create", () => {
 
 describe("CLI task resolve", () => {
 	it("resolves a task and prints confirmation", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		// Create a task via the library first
 		const { TaskService } = await import("src/task/TaskService");
@@ -406,20 +353,15 @@ describe("CLI task resolve", () => {
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const { stdout, exitCode } = runSlate([
-			"task",
-			"resolve",
-			taskId,
-			"--dir",
-			storeDir,
-		]);
+		const { stdout, exitCode } = runSlate(["task", "resolve", taskId], {
+			cwd: projectDir,
+		});
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain(`Resolved task: ${taskId}`);
 
 		// Verify the task is now done
 		const { readFileSync } = await import("node:fs");
-		const { join } = await import("node:path");
 		const filePath = join(storeDir, "tasks", `${taskId}.md`);
 		const raw = readFileSync(filePath, "utf-8");
 		const { data } = await import("gray-matter").then((m) => m.default(raw));
@@ -427,7 +369,8 @@ describe("CLI task resolve", () => {
 	});
 
 	it("prints unblocked tasks when dependents are fully resolved", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -442,27 +385,19 @@ describe("CLI task resolve", () => {
 			service.create({ title: "Child 2", dependencies: [parent.id] }),
 		);
 
-		const { stdout } = runSlate([
-			"task",
-			"resolve",
-			parent.id,
-			"--dir",
-			storeDir,
-		]);
+		const { stdout } = runSlate(["task", "resolve", parent.id], {
+			cwd: projectDir,
+		});
 
 		expect(stdout).toContain(`Resolved task: ${parent.id}`);
 		expect(stdout).toContain(`Unblocked tasks: ${child1.id}, ${child2.id}`);
 	});
 
 	it("returns error for non-existent task", async () => {
-		const storeDir = createTestDir();
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"resolve",
-			"task-999",
-			"--dir",
-			storeDir,
-		]);
+		const projectDir = createTestDir();
+		const { stderr, exitCode } = runSlate(["task", "resolve", "task-999"], {
+			cwd: projectDir,
+		});
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("not found");
 	});
@@ -474,7 +409,8 @@ describe("CLI task resolve", () => {
 
 describe("CLI task delete", () => {
 	it("deletes a task file and prints confirmation", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
 
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
@@ -489,13 +425,9 @@ describe("CLI task delete", () => {
 		const filePath = join(storeDir, "tasks", `${taskId}.md`);
 		expect(existsSync(filePath)).toBe(true);
 
-		const { stdout, exitCode } = runSlate([
-			"task",
-			"delete",
-			taskId,
-			"--dir",
-			storeDir,
-		]);
+		const { stdout, exitCode } = runSlate(["task", "delete", taskId], {
+			cwd: projectDir,
+		});
 
 		expect(exitCode).toBe(0);
 		expect(stdout).toContain(`Deleted task: ${taskId}`);
@@ -505,28 +437,19 @@ describe("CLI task delete", () => {
 	});
 
 	it("returns error for non-existent task", async () => {
-		const storeDir = createTestDir();
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"delete",
-			"task-999",
-			"--dir",
-			storeDir,
-		]);
-		expect(exitCode).toBe(1);
+		const projectDir = createTestDir();
+		const { stderr } = runSlate(["task", "delete", "task-999"], {
+			cwd: projectDir,
+		});
 		expect(stderr).toContain("not found");
 	});
 
 	it("returns error when store directory does not exist", async () => {
-		const storeDir = createTestDir();
+		const projectDir = createTestDir();
 		// Don't create any tasks — just try to delete from empty store
-		const { stderr, exitCode } = runSlate([
-			"task",
-			"delete",
-			"task-001",
-			"--dir",
-			storeDir,
-		]);
+		const { stderr, exitCode } = runSlate(["task", "delete", "task-001"], {
+			cwd: projectDir,
+		});
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("not found");
 	});

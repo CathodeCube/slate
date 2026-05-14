@@ -22,9 +22,8 @@ import { createSlate } from "src/Slate/factory";
 export function prdListCmd(defaultDir: string): Command {
 	const cmd = new Command("list");
 	cmd.description("List PRDs");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (opts: { dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async () => {
+		const slate = createSlate(defaultDir);
 		const listResult = slate.prdList();
 
 		if (!listResult.ok) {
@@ -67,9 +66,8 @@ export function prdShowCmd(defaultDir: string): Command {
 	const cmd = new Command("show");
 	cmd.description("Show a PRD's details");
 	cmd.argument("<id>", "PRD ID");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (id: string, opts: { dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async (id: string) => {
+		const slate = createSlate(defaultDir);
 		const result = slate.prdRead(id);
 
 		if (!result.ok) {
@@ -129,9 +127,8 @@ export function prdCreateCmd(defaultDir: string): Command {
 		"PRD status (todo, in-progress, done, blocked)",
 		"todo",
 	);
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts) => {
-		const slate = createSlate(opts.dir);
+		const slate = createSlate(defaultDir);
 
 		const result = slate.prdCreate({
 			title: opts.title,

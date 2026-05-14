@@ -31,9 +31,8 @@ export function taskListCmd(defaultDir: string): Command {
 		"--status <status>",
 		"Filter by status (todo, in-progress, done, blocked)",
 	);
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (opts: { status?: string; dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async (opts: { status?: string }) => {
+		const slate = createSlate(defaultDir);
 		const listResult = slate.taskList();
 
 		if (!listResult.ok) {
@@ -92,13 +91,9 @@ export function taskUpdateCmd(defaultDir: string): Command {
 		"New status (todo, in-progress, done, blocked)",
 	);
 	cmd.option("--priority <priority>", "New priority (high, medium, low)");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(
-		async (
-			id: string,
-			opts: { status?: string; priority?: string; dir: string },
-		) => {
-			const slate = createSlate(opts.dir);
+		async (id: string, opts: { status?: string; priority?: string }) => {
+			const slate = createSlate(defaultDir);
 			const updates: {
 				status?: "todo" | "in-progress" | "done" | "blocked";
 				priority?: "high" | "medium" | "low";
@@ -203,9 +198,8 @@ export function taskCreateCmd(defaultDir: string): Command {
 		"Task status (todo, in-progress, done, blocked)",
 		"todo",
 	);
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts) => {
-		const slate = createSlate(opts.dir);
+		const slate = createSlate(defaultDir);
 
 		const stdinBody = await readStdin();
 
@@ -260,7 +254,7 @@ export function taskCreateCmd(defaultDir: string): Command {
 
 		// Write body to the task file if stdin was provided
 		if (stdinBody) {
-			const filePath = join(opts.dir, "tasks", `${result.value.id}.md`);
+			const filePath = join(defaultDir, "tasks", `${result.value.id}.md`);
 			const existing = readFileSync(filePath, "utf-8");
 			const fullContent = `${existing}\n\n${stdinBody}`;
 			writeFileSync(filePath, fullContent, "utf-8");
@@ -288,9 +282,8 @@ export function taskResolveCmd(defaultDir: string): Command {
 	const cmd = new Command("resolve");
 	cmd.description("Resolve a task (mark as done)");
 	cmd.argument("<id>", "Task ID");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (id: string, opts: { dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async (id: string) => {
+		const slate = createSlate(defaultDir);
 
 		const result = slate.taskResolve(id);
 
@@ -353,9 +346,8 @@ export function taskDeleteCmd(defaultDir: string): Command {
 	const cmd = new Command("delete");
 	cmd.description("Delete a task");
 	cmd.argument("<id>", "Task ID");
-	cmd.option("--dir <dir>", "Store directory", defaultDir);
-	cmd.action(async (id: string, opts: { dir: string }) => {
-		const slate = createSlate(opts.dir);
+	cmd.action(async (id: string) => {
+		const slate = createSlate(defaultDir);
 
 		const result = slate.taskDelete(id);
 
