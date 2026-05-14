@@ -7,25 +7,25 @@ import { TaskService } from "src/task/TaskService";
 import { createTestDir } from "../utils";
 
 // ---------------------------------------------------------------------------
-// LocalFileStore directory validation
+// LocalFileStore — constructor accepts any directory path
 // ---------------------------------------------------------------------------
 
-describe("LocalFileStore — directory validation", () => {
-	it("throws when directory does not exist", () => {
+describe("LocalFileStore — constructor", () => {
+	it("does not throw when directory does not exist", () => {
 		const nonExistent = `${createTestDir()}/does-not-exist`;
-		expect(() => new LocalFileStore(nonExistent)).toThrow(
-			/Store directory is invalid: .+ \(not-found\)/,
-		);
+		expect(() => new LocalFileStore(nonExistent)).not.toThrow();
+		const store = new LocalFileStore(nonExistent);
+		expect(store.dir).toBe(nonExistent);
 	});
 
-	it("throws when path is a file", () => {
+	it("does not throw when path is a file", () => {
 		const fileDir = createTestDir();
 		const filePath = join(fileDir, "not-a-dir.txt");
 		writeFileSync(filePath, "content", "utf-8");
 
-		expect(() => new LocalFileStore(filePath)).toThrow(
-			/Store directory is invalid: .+ \(is-file\)/,
-		);
+		expect(() => new LocalFileStore(filePath)).not.toThrow();
+		const store = new LocalFileStore(filePath);
+		expect(store.dir).toBe(filePath);
 	});
 
 	it("succeeds with a valid writable directory", () => {

@@ -3,7 +3,6 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
-	statSync,
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
@@ -11,44 +10,12 @@ import { join } from "node:path";
 
 import matter from "gray-matter";
 import type { PRD, PRDError, PRDStatus, Priority } from "src/prd/types";
-import type { IStore, StoreInitError } from "src/store/IStore";
+import type { IStore } from "src/store/IStore";
 import type { Task, TaskError, TaskStatus } from "src/task/types";
 import { readEntity } from "src/utils/entity";
 import { nextSequentialID } from "src/utils/id";
 import type { Result } from "src/utils/result";
 import zod from "zod";
-
-// ---------------------------------------------------------------------------
-// Validate store directory
-// ---------------------------------------------------------------------------
-
-/**
- * Validate a directory path for store initialization.
- * Returns an error if the path does not exist, is a file, or is not writable.
- */
-export function validateStoreDirectory(
-	path: string,
-): Result<void, StoreInitError> {
-	if (!existsSync(path)) {
-		return { ok: false, error: { kind: "not-found", path } };
-	}
-
-	const stats = statSync(path);
-	if (!stats.isDirectory()) {
-		return { ok: false, error: { kind: "is-file", path } };
-	}
-
-	// Test writability by attempting to write a temp file
-	const testFile = join(path, ".write-test");
-	try {
-		writeFileSync(testFile, "", "utf-8");
-		unlinkSync(testFile);
-	} catch {
-		return { ok: false, error: { kind: "not-writable", path } };
-	}
-
-	return { ok: true, value: undefined };
-}
 
 // ---------------------------------------------------------------------------
 // LocalFileStore
@@ -93,12 +60,6 @@ export class LocalFileStore implements IStore {
 	#dir: string;
 
 	constructor(dir: string) {
-		const validation = validateStoreDirectory(dir);
-		if (!validation.ok) {
-			throw new Error(
-				`Store directory is invalid: ${validation.error.path} (${validation.error.kind})`,
-			);
-		}
 		this.#dir = dir;
 	}
 
