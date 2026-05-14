@@ -2,8 +2,9 @@ import { PRDService } from "src/prd/PRDService";
 import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import { LocalFileStore } from "src/store/LocalFileStore";
-import type { ResolveResult, Task, TaskError, TaskQueryFilter } from "src/task";
+import type { ResolveResult } from "src/task/TaskService";
 import { TaskService } from "src/task/TaskService";
+import type { Task, TaskError, TaskQueryFilter } from "src/task/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------

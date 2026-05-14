@@ -9,8 +9,9 @@ import {
 import { join } from "node:path";
 
 import matter from "gray-matter";
-import type { PRD, PRDError, Task, TaskError } from "src/prd/types";
+import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
+import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 import zod from "zod";
 

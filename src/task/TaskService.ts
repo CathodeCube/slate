@@ -1,5 +1,6 @@
-import type { PRDError, Task, TaskError } from "src/prd/types";
+import type { PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
+import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------

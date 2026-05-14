@@ -1,4 +1,5 @@
-import type { PRD, PRDError, Task, TaskError } from "src/prd/types";
+import type { PRD, PRDError } from "src/prd/types";
+import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
