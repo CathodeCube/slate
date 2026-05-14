@@ -15,6 +15,8 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 
 ## Quick Start
 
+> **Bun-only.** Slate requires Bun to run. It uses native Bun TypeScript resolution and does not support Node.js. Install [Bun](https://bun.sh/) (v1.0.0 or later) before proceeding.
+
 - Install [Bun](https://bun.sh/) (latest stable)
 - Tell your agent about Slate (More information below)
 
@@ -129,6 +131,10 @@ const actionable = await slate.tasks.query({
   filter: (task) => task.dependencies.every((id) => slate.isDone(id)),
 });
 ```
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for release notes.
 
 ## Roadmap
 
