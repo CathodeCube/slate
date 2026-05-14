@@ -4,6 +4,17 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertOk, createEmptyIndex, createTestDir, runSlate } from "../utils";
 
+/**
+ * Strip ANSI escape codes from a string.
+ */
+function stripAnsi(str: string): string {
+	// Strip ANSI escape sequences (e.g. ESC[32m, ESC[0m)
+	const ESC = String.fromCharCode(27);
+	return str
+		.replace(new RegExp(`${ESC}\\[[0-9;]*m`, "g"), "")
+		.replace(new RegExp(`${ESC}\\[[0-9;]*[A-Z]`, "g"), "");
+}
+
 // ---------------------------------------------------------------------------
 // CLI task list
 // ---------------------------------------------------------------------------
@@ -86,7 +97,7 @@ describe("CLI task update", () => {
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(`Updated task: ${taskId}`);
+		expect(stripAnsi(stdout)).toContain(`Updated task: ${taskId}`);
 
 		// Verify file on disk was actually updated
 		const filePath = join(storeDir, "tasks", `${taskId}.md`);
@@ -114,7 +125,7 @@ describe("CLI task update", () => {
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(`Updated task: ${taskId}`);
+		expect(stripAnsi(stdout)).toContain(`Updated task: ${taskId}`);
 
 		const filePath = join(storeDir, "tasks", `${taskId}.md`);
 		const content = readFileSync(filePath, "utf-8");
@@ -192,7 +203,7 @@ describe("CLI task update", () => {
 		);
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(`Updated task: ${taskId}`);
+		expect(stripAnsi(stdout)).toContain(`Updated task: ${taskId}`);
 
 		const filePath = join(storeDir, "tasks", `${taskId}.md`);
 		const content = readFileSync(filePath, "utf-8");
@@ -256,12 +267,12 @@ describe("CLI prd show", () => {
 
 		const { stdout } = runSlate(["prd", "show", prdId], { cwd: projectDir });
 
-		expect(stdout).toContain(`ID:       ${prdId}`);
-		expect(stdout).toContain("Title:    Test PRD");
-		expect(stdout).toContain("Status:   in-progress");
-		expect(stdout).toContain("Priority: high");
-		expect(stdout).toContain("Created:");
-		expect(stdout).toContain("Updated:");
+		expect(stripAnsi(stdout)).toContain(`ID:       ${prdId}`);
+		expect(stripAnsi(stdout)).toContain("Title:    Test PRD");
+		expect(stripAnsi(stdout)).toContain("Status:   in-progress");
+		expect(stripAnsi(stdout)).toContain("Priority: high");
+		expect(stripAnsi(stdout)).toContain("Created:");
+		expect(stripAnsi(stdout)).toContain("Updated:");
 	});
 
 	it("returns error for non-existent PRD", async () => {
@@ -384,7 +395,7 @@ describe("CLI task resolve", () => {
 		});
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(`Resolved task: ${taskId}`);
+		expect(stripAnsi(stdout)).toContain(`Resolved task: ${taskId}`);
 
 		// Verify the task is now done
 		const { readFileSync } = await import("node:fs");
@@ -415,8 +426,10 @@ describe("CLI task resolve", () => {
 			cwd: projectDir,
 		});
 
-		expect(stdout).toContain(`Resolved task: ${parent.id}`);
-		expect(stdout).toContain(`Unblocked tasks: ${child1.id}, ${child2.id}`);
+		expect(stripAnsi(stdout)).toContain(`Resolved task: ${parent.id}`);
+		expect(stripAnsi(stdout)).toContain(
+			`Unblocked tasks: ${child1.id}, ${child2.id}`,
+		);
 	});
 
 	it("returns error for non-existent task", async () => {
@@ -456,7 +469,7 @@ describe("CLI task delete", () => {
 		});
 
 		expect(exitCode).toBe(0);
-		expect(stdout).toContain(`Deleted task: ${taskId}`);
+		expect(stripAnsi(stdout)).toContain(`Deleted task: ${taskId}`);
 
 		// Verify file is removed from disk
 		expect(existsSync(filePath)).toBe(false);

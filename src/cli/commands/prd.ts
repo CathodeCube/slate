@@ -4,6 +4,7 @@
  * Exports: `prdListCmd`, `prdShowCmd`, `prdCreateCmd`.
  */
 import { Command } from "commander";
+import { bold, cyan, gray, green, magenta } from "src/cli/colors";
 import { handleError } from "src/cli/error";
 import { createSlate } from "src/Slate/factory";
 
@@ -34,13 +35,16 @@ export function prdListCmd(defaultDir: string): Command {
 		const prds = listResult.value;
 
 		if (prds.length === 0) {
-			console.log("No PRDs found.");
+			console.log(gray("No PRDs found."));
 			return;
 		}
 
 		console.log(
 			prds
-				.map((p) => `${p.id}\t${p.title}\t${p.status}\t${p.priority}`)
+				.map(
+					(p) =>
+						`${magenta(p.id)}\t${p.title}\t${cyan(p.status)}\t${gray(p.priority)}`,
+				)
 				.join("\n"),
 		);
 	});
@@ -73,12 +77,12 @@ export function prdShowCmd(defaultDir: string): Command {
 		}
 
 		const prd = result.value;
-		console.log(`ID:       ${prd.id}`);
-		console.log(`Title:    ${prd.title}`);
-		console.log(`Status:   ${prd.status}`);
-		console.log(`Priority: ${prd.priority}`);
-		console.log(`Created:  ${prd.created}`);
-		console.log(`Updated:  ${prd.updated}`);
+		console.log(`${bold(`ID:`)}       ${magenta(prd.id)}`);
+		console.log(`${bold(`Title:`)}    ${prd.title}`);
+		console.log(`${bold(`Status:`)}   ${cyan(prd.status)}`);
+		console.log(`${bold(`Priority:`)} ${gray(prd.priority)}`);
+		console.log(`${bold(`Created:`)}  ${gray(prd.created)}`);
+		console.log(`${bold(`Updated:`)}  ${gray(prd.updated)}`);
 	});
 	return cmd;
 }
@@ -123,7 +127,9 @@ export function prdCreateCmd(defaultDir: string): Command {
 			handleError(result.error);
 		}
 
-		console.log(`Created PRD: ${result.value.id} — ${result.value.title}`);
+		console.log(
+			`${green(`Created PRD:`)} ${magenta(result.value.id)} — ${result.value.title}`,
+		);
 	});
 	return cmd;
 }

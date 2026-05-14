@@ -8,6 +8,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { Command } from "commander";
+import { bold, green } from "src/cli/colors";
 
 // ---------------------------------------------------------------------------
 // init command
@@ -34,13 +35,13 @@ export function initCmd(defaultDir: string): Command {
 			const path = join(defaultDir, sub);
 			if (!existsSync(path)) {
 				mkdirSync(path, { recursive: true });
-				console.log(`Created: ${path}`);
+				console.log(`${green(`Created: ${path}`)}`);
 			} else {
-				console.log(`Exists:  ${path}`);
+				console.log(`${green(`Exists:  ${path}`)}`);
 			}
 		}
 
-		console.log(`\nSlate initialized at ${defaultDir}`);
+		console.log(`\n${bold(`Slate initialized at ${defaultDir}`)}`);
 	});
 	return cmd;
 }

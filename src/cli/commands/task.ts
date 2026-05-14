@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { Command } from "commander";
+import { bold, cyan, gray, green, magenta } from "src/cli/colors";
 import { handleError } from "src/cli/error";
 import { readStdin } from "src/cli/stdin";
 import { createSlate } from "src/Slate/factory";
@@ -54,13 +55,16 @@ export function taskListCmd(defaultDir: string): Command {
 		}
 
 		if (tasks.length === 0) {
-			console.log("No tasks found.");
+			console.log(gray("No tasks found."));
 			return;
 		}
 
 		console.log(
 			tasks
-				.map((t) => `${t.id}\t${t.title}\t${t.status}\t${t.priority}`)
+				.map(
+					(t) =>
+						`${magenta(t.id)}\t${t.title}\t${cyan(t.status)}\t${gray(t.priority)}`,
+				)
 				.join("\n"),
 		);
 	});
@@ -129,7 +133,7 @@ export function taskUpdateCmd(defaultDir: string): Command {
 				handleError(result.error);
 			}
 
-			console.log(`Updated task: ${id}`);
+			console.log(`${green(`Updated task:`)} ${magenta(id)}`);
 		},
 	);
 	return cmd;
@@ -188,7 +192,9 @@ export function taskCreateCmd(defaultDir: string): Command {
 			writeFileSync(filePath, fullContent, "utf-8");
 		}
 
-		console.log(`Created task: ${result.value.id} — ${result.value.title}`);
+		console.log(
+			`${green(`Created task:`)} ${magenta(result.value.id)} — ${result.value.title}`,
+		);
 	});
 	return cmd;
 }
@@ -220,9 +226,11 @@ export function taskResolveCmd(defaultDir: string): Command {
 		}
 
 		const unblocked = result.value.unblocked;
-		console.log(`Resolved task: ${id}`);
+		console.log(`${green(`Resolved task:`)} ${magenta(id)}`);
 		if (unblocked.length > 0) {
-			console.log(`Unblocked tasks: ${unblocked.join(", ")}`);
+			console.log(
+				`${bold(`Unblocked tasks:`)} ${unblocked.map((u) => magenta(u)).join(", ")}`,
+			);
 		}
 	});
 	return cmd;
@@ -253,7 +261,7 @@ export function taskDeleteCmd(defaultDir: string): Command {
 			handleError(result.error);
 		}
 
-		console.log(`Deleted task: ${id}`);
+		console.log(`${green(`Deleted task:`)} ${magenta(id)}`);
 	});
 	return cmd;
 }

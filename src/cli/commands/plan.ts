@@ -6,6 +6,7 @@
  * → low) then by creation date.
  */
 import { Command } from "commander";
+import { bold, cyan, gray, magenta } from "src/cli/colors";
 import { handleError } from "src/cli/error";
 import { createSlate } from "src/Slate/factory";
 import { buildDependencyIndex } from "src/task/DependencyIndex";
@@ -68,7 +69,7 @@ export function planCmd(): Command {
 		const allTasks = listResult.value;
 
 		if (allTasks.length === 0) {
-			console.log("No actionable tasks — all tasks are done or blocked.");
+			console.log(gray("No actionable tasks — all tasks are done or blocked."));
 			return;
 		}
 
@@ -90,9 +91,11 @@ export function planCmd(): Command {
 
 		if (actionable.length === 0) {
 			if (hasNonDoneTask) {
-				console.log("No unblocked tasks available.");
+				console.log(gray("No unblocked tasks available."));
 			} else {
-				console.log("No actionable tasks — all tasks are done or blocked.");
+				console.log(
+					gray("No actionable tasks — all tasks are done or blocked."),
+				);
 			}
 			return;
 		}
@@ -107,11 +110,11 @@ export function planCmd(): Command {
 
 		const next = actionable[0];
 
-		console.log(`Next actionable task:`);
-		console.log(`  ID:       ${next.id}`);
-		console.log(`  Title:    ${next.title}`);
-		console.log(`  Status:   ${next.status}`);
-		console.log(`  Priority: ${next.priority}`);
+		console.log(`${bold(`Next actionable task:`)}`);
+		console.log(`  ${bold(`ID:`)}       ${magenta(next.id)}`);
+		console.log(`  ${bold(`Title:`)}    ${next.title}`);
+		console.log(`  ${bold(`Status:`)}   ${cyan(next.status)}`);
+		console.log(`  ${bold(`Priority:`)} ${gray(next.priority)}`);
 	});
 	return cmd;
 }
