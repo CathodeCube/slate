@@ -11,21 +11,20 @@ import matter from "gray-matter";
  * Generic entity file reader with YAML frontmatter parsing and Zod validation.
  *
  * Reads a file by ID, extracts YAML frontmatter via `gray-matter`, validates
- * it against a Zod schema, and transforms the parsed data via a mapper function.
+ * it against a Zod schema, and returns the validated data directly.
  */
 
 /**
  * Read an entity file, parse its YAML frontmatter, and validate against
  * the provided Zod schema.
  *
- * @param dir  - Directory containing the entity files.
- * @param id   - Entity ID (used as filename stem).
- * @param ext  - File extension (e.g. ".md").
- * @param schema  - Zod schema to validate the frontmatter data.
- * @param mapRow  - Function to transform parsed data into the entity type.
- * @returns The parsed entity on success, or `{ ok: false, error: { kind: "not-found" | "corrupted-file" } }` on failure.
+ * @param dir    - Directory containing the entity files.
+ * @param id     - Entity ID (used as filename stem).
+ * @param ext    - File extension (e.g. ".md").
+ * @param schema - Zod schema to validate the frontmatter data.
+ * @returns The validated data on success, or `{ ok: false, error: { kind: "not-found" | "corrupted-file" } }` on failure.
  */
-export function readEntity<T, S>(
+export function readEntity<T>(
 	dir: string,
 	id: string,
 	ext: string,
@@ -33,10 +32,9 @@ export function readEntity<T, S>(
 		safeParse(data: unknown): {
 			success: boolean;
 			error?: { message: string };
-			data?: S;
+			data?: T;
 		};
 	},
-	mapRow: (data: S) => T,
 ):
 	| { ok: true; value: T }
 	| {
@@ -68,23 +66,5 @@ export function readEntity<T, S>(
 		};
 	}
 
-	// At this point schemaResult is known to be a success case.
-	// The data field is available because schema.safeParse returns { data: S } on success.
-	// We use a type assertion on 'data' only (not 'as unknown as') because the
-	// schema type signature already guarantees the data shape.
-	const validatedData = schemaResult.data;
-
-	if (validatedData === undefined) {
-		// Unreachable — we already checked !success above.
-		return {
-			ok: false,
-			error: {
-				kind: "corrupted-file",
-				id,
-				message: "Unexpected validation result",
-			},
-		};
-	}
-
-	return { ok: true, value: mapRow(validatedData) };
+	return { ok: true, value: schemaResult.data as T };
 }

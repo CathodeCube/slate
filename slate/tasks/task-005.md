@@ -1,12 +1,12 @@
 ---
 id: task-005
 title: Deepen or simplify readEntity — clarify the entity reading seam
-status: todo
+status: done
 priority: low
 dependencies: []
 prd: prd-001
 created: '2026-05-13T12:41:06.551Z'
-updated: '2026-05-13T12:41:06.551Z'
+updated: '2026-05-13T13:52:04.759Z'
 ---
 
 

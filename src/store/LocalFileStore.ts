@@ -151,20 +151,7 @@ export class LocalFileStore implements IStore {
 			return { ok: false, error: { kind: "not-found", id } };
 		}
 
-		const result = readEntity(
-			prdDir,
-			id,
-			PRD_FILE_EXT,
-			prdFrontmatterSchema,
-			(data) => ({
-				id: data.id,
-				title: data.title,
-				status: data.status,
-				priority: data.priority,
-				created: data.created,
-				updated: data.updated,
-			}),
-		);
+		const result = readEntity(prdDir, id, PRD_FILE_EXT, prdFrontmatterSchema);
 
 		if (!result.ok) {
 			return { ok: false, error: result.error as PRDError };
@@ -337,16 +324,6 @@ export class LocalFileStore implements IStore {
 			id,
 			TASK_FILE_EXT,
 			taskFrontmatterSchema,
-			(data) => ({
-				id: data.id,
-				title: data.title,
-				status: data.status,
-				priority: data.priority,
-				dependencies: data.dependencies,
-				prd: data.prd,
-				created: data.created,
-				updated: data.updated,
-			}),
 		);
 
 		if (!result.ok) {
