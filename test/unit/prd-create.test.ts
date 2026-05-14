@@ -4,7 +4,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
-import { createTestDir } from "./utils";
+import { createTestDir } from "../utils";
 
 describe("CLI prd create — end-to-end", () => {
 	it("creates a file in slate/prds/ with correct YAML frontmatter", () => {

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { TaskService } from "src/task/TaskService";
-import { createTestDir } from "./utils";
+import { createTestDir } from "../utils";
 
 describe("CLI task create — end-to-end", () => {
 	it("creates a file in slate/tasks/ with correct YAML frontmatter", () => {
