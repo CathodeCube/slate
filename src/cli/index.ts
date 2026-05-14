@@ -51,7 +51,24 @@ export function main(): void {
 			});
 
 			if (!result.ok) {
-				process.stderr.write(`Error: ${result.error.kind}\n`);
+				switch (result.error.kind) {
+					case "invalid-title":
+						process.stderr.write(`Error: ${result.error.message}\n`);
+						break;
+					case "not-found":
+						process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
+						break;
+					case "invalid-status":
+						process.stderr.write(
+							`Error: Invalid status ${result.error.status}\n`,
+						);
+						break;
+					case "corrupted-file":
+						process.stderr.write(
+							`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
+						);
+						break;
+				}
 				process.exit(1);
 			}
 

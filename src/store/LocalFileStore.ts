@@ -8,9 +8,10 @@ import {
 import { join } from "node:path";
 
 import matter from "gray-matter";
-import type { PRD, PrdError } from "src/prd/types";
+import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import type { Result } from "src/utils/result";
+import zod from "zod";
 
 // ---------------------------------------------------------------------------
 // LocalFileStore
@@ -20,37 +21,49 @@ const PRD_DIR = "prds";
 const PRD_FILE_EXT = ".md";
 
 /**
+ * Zod schema for PRD YAML frontmatter.
+ */
+const frontmatterSchema = zod.object({
+	id: zod.string(),
+	title: zod.string(),
+	status: zod.enum(["todo", "in-progress", "done", "blocked"]),
+	priority: zod.enum(["high", "medium", "low"]),
+	created: zod.string(),
+	updated: zod.string(),
+});
+
+/**
  * File-based store implementation that reads and writes PRDs and tasks as
  * Markdown files with YAML frontmatter.
  */
 export class LocalFileStore implements IStore {
-	private _dir: string;
+	#dir: string;
 
 	constructor(dir: string) {
-		this._dir = dir;
+		this.#dir = dir;
 	}
 
 	get dir(): string {
-		return this._dir;
+		return this.#dir;
 	}
 
 	/**
 	 * Ensure the store directory and PRD subdirectory exist.
 	 */
 	private ensureDir(): void {
-		const prdDir = join(this._dir, PRD_DIR);
-		if (!existsSync(prdDir)) {
-			mkdirSync(prdDir, { recursive: true });
+		const PRDDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(PRDDir)) {
+			mkdirSync(PRDDir, { recursive: true });
 		}
 	}
 
 	/**
 	 * Generate the next sequential PRD ID by scanning existing files.
 	 */
-	nextPrdId(): string {
+	nextPRDId(): string {
 		this.ensureDir();
-		const prdDir = join(this._dir, PRD_DIR);
-		const files = readdirSync(prdDir).filter((f) => f.endsWith(PRD_FILE_EXT));
+		const PRDDir = join(this.#dir, PRD_DIR);
+		const files = readdirSync(PRDDir).filter((f) => f.endsWith(PRD_FILE_EXT));
 		let maxNum = 0;
 		for (const file of files) {
 			const match = file.match(/^prd-(\d+)/);
@@ -67,10 +80,10 @@ export class LocalFileStore implements IStore {
 
 	// -- PRD operations -------------------------------------------------------
 
-	prdCreate(prd: PRD): Result<void, PrdError> {
+	createPRD(prd: PRD): Result<void, PRDError> {
 		this.ensureDir();
-		const prdDir = join(this._dir, PRD_DIR);
-		const filePath = join(prdDir, `${prd.id}${PRD_FILE_EXT}`);
+		const PRDDir = join(this.#dir, PRD_DIR);
+		const filePath = join(PRDDir, `${prd.id}${PRD_FILE_EXT}`);
 
 		const frontmatter = {
 			id: prd.id,
@@ -86,55 +99,75 @@ export class LocalFileStore implements IStore {
 		return { ok: true, value: undefined };
 	}
 
-	prdRead(id: string): Result<PRD, PrdError> {
-		const prdDir = join(this._dir, PRD_DIR);
-		if (!existsSync(prdDir)) {
-			return { ok: false, error: { kind: "not-found", id } as PrdError };
+	readPRD(id: string): Result<PRD, PRDError> {
+		const PRDDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(PRDDir)) {
+			return { ok: false, error: { kind: "not-found", id } };
 		}
 
-		const filePath = join(prdDir, `${id}${PRD_FILE_EXT}`);
+		const filePath = join(PRDDir, `${id}${PRD_FILE_EXT}`);
 		if (!existsSync(filePath)) {
-			return { ok: false, error: { kind: "not-found", id } as PrdError };
+			return { ok: false, error: { kind: "not-found", id } };
 		}
 
 		const raw = readFileSync(filePath, "utf-8");
 		const { data } = matter(raw);
 
+		const parsed = frontmatterSchema.safeParse(data);
+		if (!parsed.success) {
+			return {
+				ok: false,
+				error: {
+					kind: "corrupted-file",
+					id,
+					message: parsed.error.message,
+				},
+			};
+		}
+
 		return {
 			ok: true,
 			value: {
-				id: data.id as string,
-				title: data.title as string,
-				status: data.status as PRD["status"],
-				priority: data.priority as PRD["priority"],
-				created: data.created as string,
-				updated: data.updated as string,
+				id: parsed.data.id,
+				title: parsed.data.title,
+				status: parsed.data.status,
+				priority: parsed.data.priority,
+				created: parsed.data.created,
+				updated: parsed.data.updated,
 			},
 		};
 	}
 
-	prdList(): Result<PRD[], PrdError> {
-		const prdDir = join(this._dir, PRD_DIR);
-		if (!existsSync(prdDir)) {
+	listPRDs(): Result<PRD[], PRDError> {
+		const PRDDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(PRDDir)) {
 			return { ok: true, value: [] };
 		}
 
-		const files = readdirSync(prdDir).filter((f) => f.endsWith(PRD_FILE_EXT));
+		const files = readdirSync(PRDDir).filter((f) => f.endsWith(PRD_FILE_EXT));
 		const prds: PRD[] = [];
 
 		for (const file of files) {
-			const filePath = join(prdDir, file);
+			const filePath = join(PRDDir, file);
 			const raw = readFileSync(filePath, "utf-8");
 			const { data } = matter(raw);
+
+			const parsed = frontmatterSchema.safeParse(data);
+			if (!parsed.success) {
+				continue;
+			}
+
 			prds.push({
-				id: data.id as string,
-				title: data.title as string,
-				status: data.status as PRD["status"],
-				priority: data.priority as PRD["priority"],
-				created: data.created as string,
-				updated: data.updated as string,
+				id: parsed.data.id,
+				title: parsed.data.title,
+				status: parsed.data.status,
+				priority: parsed.data.priority,
+				created: parsed.data.created,
+				updated: parsed.data.updated,
 			});
 		}
+
+		prds.sort((a, b) => a.id.localeCompare(b.id));
 
 		return { ok: true, value: prds };
 	}

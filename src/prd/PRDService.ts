@@ -1,4 +1,4 @@
-import type { PRD, PRDStatus, PrdError, Priority } from "src/prd/types";
+import type { PRD, PRDError, PRDStatus, Priority } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import type { Result } from "src/utils/result";
 
@@ -20,7 +20,7 @@ export class PRDService {
 		title: string;
 		priority?: Priority;
 		status?: PRDStatus;
-	}): Result<PRD, PrdError> {
+	}): Result<PRD, PRDError> {
 		const title = params.title.trim();
 		if (!title) {
 			return {
@@ -34,7 +34,7 @@ export class PRDService {
 		const priority = params.priority ?? "medium";
 
 		const prd: PRD = {
-			id: this.store.nextPrdId(),
+			id: this.store.nextPRDId(),
 			title,
 			status,
 			priority,
@@ -42,7 +42,7 @@ export class PRDService {
 			updated: now,
 		};
 
-		const result = this.store.prdCreate(prd);
+		const result = this.store.createPRD(prd);
 		if (!result.ok) {
 			return result;
 		}

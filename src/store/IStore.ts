@@ -1,4 +1,4 @@
-import type { PRD, PrdError } from "src/prd/types";
+import type { PRD, PRDError } from "src/prd/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
@@ -13,17 +13,17 @@ export interface IStore {
 	/**
 	 * Create a PRD file in the store.
 	 */
-	prdCreate(prd: PRD): Result<void, PrdError>;
+	createPRD(prd: PRD): Result<void, PRDError>;
 
 	/**
 	 * Read a PRD file from the store.
 	 */
-	prdRead(id: string): Result<PRD, PrdError>;
+	readPRD(id: string): Result<PRD, PRDError>;
 
 	/**
 	 * Read all PRD files from the store.
 	 */
-	prdList(): Result<PRD[], PrdError>;
+	listPRDs(): Result<PRD[], PRDError>;
 
 	/**
 	 * Directory path where the store lives.
@@ -33,5 +33,5 @@ export interface IStore {
 	/**
 	 * Generate the next sequential PRD ID.
 	 */
-	nextPrdId(): string;
+	nextPRDId(): string;
 }
