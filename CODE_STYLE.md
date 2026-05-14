@@ -77,6 +77,27 @@ type ReadError =
   external dependencies (e.g., `result.test.ts`, `exec/run.test.ts`).
 - Use descriptive test names: `it("returns NotFound when file does not exist")`.
 
+### Test Directory Pattern
+
+Tests that need an isolated filesystem must use the global test directory
+(`.test/`) via `createTestDir()` from `test/utils.ts`. This creates a unique
+subdirectory inside the global test directory — no per-test cleanup is needed
+since the global teardown removes the parent directory, which removes all
+subdirectories automatically.
+
+```typescript
+import { createTestDir } from "test/utils";
+
+describe("some feature", () => {
+  it("creates a file correctly", () => {
+    const storeDir = createTestDir();
+    // storeDir might be: "/path/.test/test-1747056000000-a3b9c1d2"
+    const slate = new Slate({ dir: storeDir });
+    // ... test logic ...
+  });
+});
+```
+
 ## TypeScript
 
 - **Strict mode** enabled (`tsconfig.json`).
