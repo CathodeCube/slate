@@ -91,7 +91,6 @@ describe("createPRD — already-exists check", () => {
 		// Try to create another PRD with the same ID
 		const _duplicate = service.create({
 			title: "Duplicate PRD",
-			status: "todo",
 		});
 
 		// nextPRDID will generate a new ID, so we need to test via the store directly

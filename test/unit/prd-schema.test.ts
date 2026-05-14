@@ -5,11 +5,10 @@ import { prdFrontmatterSchema } from "src/prd/schema";
 // ---------------------------------------------------------------------------
 
 describe("prdFrontmatterSchema — valid input", () => {
-	it("accepts all required fields", () => {
+	it("accepts all required fields without status", () => {
 		const input = {
 			id: "prd-001",
 			title: "Test PRD",
-			status: "todo",
 			priority: "high",
 			created: "2026-01-01T00:00:00.000Z",
 			updated: "2026-01-01T00:00:00.000Z",
@@ -21,11 +20,27 @@ describe("prdFrontmatterSchema — valid input", () => {
 		if (!result.success) return;
 		expect(result.data.id).toBe("prd-001");
 		expect(result.data.title).toBe("Test PRD");
-		expect(result.data.status).toBe("todo");
 		expect(result.data.priority).toBe("high");
 	});
 
-	it("accepts all valid status values", () => {
+	it("accepts status for backward compatibility", () => {
+		const input = {
+			id: "prd-001",
+			title: "Test PRD",
+			status: "in-progress" as const,
+			priority: "high",
+			created: "2026-01-01T00:00:00.000Z",
+			updated: "2026-01-01T00:00:00.000Z",
+		};
+
+		const result = prdFrontmatterSchema.safeParse(input);
+
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+		expect(result.data.status).toBe("in-progress");
+	});
+
+	it("accepts optional status values for backward compatibility", () => {
 		for (const status of ["todo", "in-progress", "done", "blocked"] as const) {
 			const result = prdFrontmatterSchema.safeParse({
 				id: "prd-001",
@@ -39,12 +54,22 @@ describe("prdFrontmatterSchema — valid input", () => {
 		}
 	});
 
+	it("accepts input without status", () => {
+		const result = prdFrontmatterSchema.safeParse({
+			id: "prd-001",
+			title: "Test",
+			priority: "medium",
+			created: "2026-01-01T00:00:00.000Z",
+			updated: "2026-01-01T00:00:00.000Z",
+		});
+		expect(result.success).toBe(true);
+	});
+
 	it("accepts all valid priority values", () => {
 		for (const priority of ["high", "medium", "low"] as const) {
 			const result = prdFrontmatterSchema.safeParse({
 				id: "prd-001",
 				title: "Test",
-				status: "todo",
 				priority,
 				created: "2026-01-01T00:00:00.000Z",
 				updated: "2026-01-01T00:00:00.000Z",
@@ -67,7 +92,7 @@ describe("prdFrontmatterSchema — invalid input", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects invalid status value", () => {
+	it("rejects invalid status value when provided", () => {
 		const result = prdFrontmatterSchema.safeParse({
 			id: "prd-001",
 			title: "Test",
@@ -95,7 +120,6 @@ describe("prdFrontmatterSchema — invalid input", () => {
 		const result = prdFrontmatterSchema.safeParse({
 			id: 123 as unknown as string,
 			title: "Test",
-			status: "todo",
 			priority: "medium",
 			created: "2026-01-01T00:00:00.000Z",
 			updated: "2026-01-01T00:00:00.000Z",
@@ -114,11 +138,28 @@ describe("prdFrontmatterSchema — invalid input", () => {
 // ---------------------------------------------------------------------------
 
 describe("prdFrontmatterSchema — round-trip", () => {
-	it("parses and re-serializes to the same shape", () => {
+	it("parses and re-serializes to the same shape (with status)", () => {
 		const input = {
 			id: "prd-042",
 			title: "Round-trip PRD",
 			status: "in-progress",
+			priority: "low",
+			created: "2026-05-01T12:00:00.000Z",
+			updated: "2026-05-13T18:30:00.000Z",
+		};
+
+		const parsed = prdFrontmatterSchema.parse(input);
+		const result = prdFrontmatterSchema.safeParse(parsed);
+
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+		expect(result.data).toEqual(input);
+	});
+
+	it("parses and re-serializes to the same shape (without status)", () => {
+		const input = {
+			id: "prd-042",
+			title: "Round-trip PRD",
 			priority: "low",
 			created: "2026-05-01T12:00:00.000Z",
 			updated: "2026-05-13T18:30:00.000Z",

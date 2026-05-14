@@ -29,7 +29,7 @@ describe("CLI prd create — end-to-end", () => {
 
 		expect(data.id).toMatch(/^prd-\d{3}$/);
 		expect(data.title).toBe("Test PRD");
-		expect(data.status).toBe("todo");
+		expect(data.status).toBeUndefined();
 		expect(data.priority).toBe("medium");
 		expect(data.created).toBeDefined();
 		expect(data.updated).toBeDefined();
@@ -56,7 +56,7 @@ describe("CLI prd create — end-to-end", () => {
 		expect(files.length).toBe(2);
 	});
 
-	it("defaults status to todo", () => {
+	it("returns status 'todo' when no children exist", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
@@ -69,7 +69,7 @@ describe("CLI prd create — end-to-end", () => {
 		expect(result.value.status).toBe("todo");
 	});
 
-	it("accepts custom priority and status", () => {
+	it("accepts custom priority", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
@@ -77,14 +77,13 @@ describe("CLI prd create — end-to-end", () => {
 		const result = service.create({
 			title: "Custom PRD",
 			priority: "high",
-			status: "in-progress",
 		});
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 
 		expect(result.value.priority).toBe("high");
-		expect(result.value.status).toBe("in-progress");
+		expect(result.value.status).toBe("todo");
 	});
 
 	it("rejects empty title", () => {

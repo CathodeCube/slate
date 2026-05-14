@@ -259,7 +259,6 @@ describe("CLI prd show", () => {
 
 		const createResult = service.create({
 			title: "Test PRD",
-			status: "in-progress",
 			priority: "high",
 		});
 		expect(createResult.ok).toBe(true);
@@ -269,7 +268,7 @@ describe("CLI prd show", () => {
 
 		expect(stripAnsi(stdout)).toContain(`ID:       ${prdId}`);
 		expect(stripAnsi(stdout)).toContain("Title:    Test PRD");
-		expect(stripAnsi(stdout)).toContain("Status:   in-progress");
+		expect(stripAnsi(stdout)).toContain("Status:   todo");
 		expect(stripAnsi(stdout)).toContain("Priority: high");
 		expect(stripAnsi(stdout)).toContain("Created:");
 		expect(stripAnsi(stdout)).toContain("Updated:");
@@ -313,7 +312,7 @@ describe("CLI prd create", () => {
 		const { data } = await import("gray-matter").then((m) => m.default(raw));
 		expect(data.id).toMatch(/^prd-\d{3}$/);
 		expect(data.title).toBe("CLI Test PRD");
-		expect(data.status).toBe("todo");
+		expect(data.status).toBeUndefined();
 		expect(data.priority).toBe("high");
 	});
 

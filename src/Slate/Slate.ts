@@ -81,7 +81,6 @@ export class Slate implements ISlate {
 	prdCreate(params: {
 		title: string;
 		priority?: "high" | "medium" | "low";
-		status?: "todo" | "in-progress" | "done" | "blocked";
 	}): Result<PRD, SlateError> {
 		const result = this.#prds.create(params);
 		if (!result.ok) {

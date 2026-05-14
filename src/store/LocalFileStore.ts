@@ -181,7 +181,6 @@ export class LocalFileStore implements IStore {
 		const frontmatter = {
 			id: prd.id,
 			title: prd.title,
-			status: prd.status,
 			priority: prd.priority,
 			created: prd.created,
 			updated: prd.updated,
@@ -210,7 +209,7 @@ export class LocalFileStore implements IStore {
 			return { ok: false, error: result.error as PRDError };
 		}
 
-		return result;
+		return { ok: true, value: result.value as unknown as PRD };
 	}
 
 	/**
@@ -220,9 +219,10 @@ export class LocalFileStore implements IStore {
 	 */
 	listPRDs(): Result<PRD[], PRDError> {
 		const prdDir = join(this.#dir, PRD_DIR);
+		const entities = listEntities(prdDir, PRD_FILE_EXT, prdFrontmatterSchema);
 		return {
 			ok: true,
-			value: listEntities(prdDir, PRD_FILE_EXT, prdFrontmatterSchema),
+			value: entities as unknown as PRD[],
 		};
 	}
 

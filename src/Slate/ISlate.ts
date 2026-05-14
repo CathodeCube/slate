@@ -61,16 +61,17 @@ export interface ISlate {
 	/**
 	 * Create a new PRD.
 	 *
+	 * The PRD's `status` is computed from child task statuses at read time
+	 * — it is not persisted in the frontmatter.
+	 *
 	 * @param params - The PRD creation parameters.
 	 * @param params.title - The PRD title (must not be empty after trimming).
 	 * @param params.priority - Optional priority level. Defaults to `"medium"`.
-	 * @param params.status - Optional status. Defaults to `"todo"`.
 	 * @returns The created PRD on success, or a `SlateError` on failure.
 	 */
 	prdCreate(params: {
 		title: string;
 		priority?: "high" | "medium" | "low";
-		status?: "todo" | "in-progress" | "done" | "blocked";
 	}): Result<PRD, SlateError>;
 
 	/**

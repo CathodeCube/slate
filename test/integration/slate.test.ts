@@ -51,13 +51,12 @@ describe("Slate library — integration", () => {
 		const result = slate.prdCreate({
 			title: "Custom PRD",
 			priority: "high",
-			status: "in-progress",
 		});
 
 		expect(result.ok).toBe(true);
 		const prd = assertOk(result);
 		expect(prd.priority).toBe("high");
-		expect(prd.status).toBe("in-progress");
+		expect(prd.status).toBe("todo");
 	});
 
 	it("prdRead returns a PRD by ID", () => {
@@ -613,7 +612,7 @@ describe("Slate library — integration", () => {
 		const { data: prdData } = matter(prdRaw);
 		expect(prdData.id).toBe(prdId);
 		expect(prdData.title).toBe("Full Workflow Test");
-		expect(prdData.status).toBe("todo");
+		expect(prdData.status).toBeUndefined();
 		expect(prdData.priority).toBe("medium");
 		expect(prdData.created).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 		expect(prdData.updated).toMatch(/^\d{4}-\d{2}-\d{2}T/);
@@ -687,5 +686,144 @@ describe("Slate library — integration", () => {
 		expect(task2.id).toBe("task-002");
 		expect(task3.id).toBe("task-003");
 		expect(adHoc.id).toBe("task-004");
+	});
+
+	// -- PRD status computation tests ----------------------------------------
+
+	it("computes PRD status as 'done' when all child tasks are done", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const prdResult = slate.prdCreate({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+		const prdId = prdResult.value.id;
+
+		// Create child tasks
+		const task1 = assertOk(slate.taskCreate({ title: "Task 1", prd: prdId }));
+		const task2 = assertOk(slate.taskCreate({ title: "Task 2", prd: prdId }));
+
+		// PRD should be 'todo' initially
+		const prd1 = assertOk(slate.prdRead(prdId));
+		expect(prd1.status).toBe("todo");
+
+		// Resolve both tasks
+		slate.taskResolve(task1.id);
+		slate.taskResolve(task2.id);
+
+		// PRD should now be 'done'
+		const prd2 = assertOk(slate.prdRead(prdId));
+		expect(prd2.status).toBe("done");
+	});
+
+	it("computes PRD status as 'in-progress' when any child is in-progress", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const prdResult = slate.prdCreate({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+		const prdId = prdResult.value.id;
+
+		const task1 = assertOk(slate.taskCreate({ title: "Task 1", prd: prdId }));
+		const task2 = assertOk(slate.taskCreate({ title: "Task 2", prd: prdId }));
+
+		// Mark one task in-progress
+		slate.taskUpdate(task1.id, { status: "in-progress" });
+
+		const prd = assertOk(slate.prdRead(prdId));
+		expect(prd.status).toBe("in-progress");
+
+		// Resolve task 1 — task 1 is done, task 2 is still todo
+		slate.taskResolve(task1.id);
+
+		const prd2 = assertOk(slate.prdRead(prdId));
+		expect(prd2.status).toBe("todo");
+
+		// Now resolve task 2 — all children done
+		slate.taskResolve(task2.id);
+
+		const prd3 = assertOk(slate.prdRead(prdId));
+		expect(prd3.status).toBe("done");
+	});
+
+	it("computes PRD status as 'todo' when no children exist", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const prdResult = slate.prdCreate({ title: "Empty PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+
+		const prd = assertOk(slate.prdRead(prdResult.value.id));
+		expect(prd.status).toBe("todo");
+	});
+
+	it("computes PRD status from list() for each PRD", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const prd1 = assertOk(slate.prdCreate({ title: "PRD 1" }));
+		const prd2 = assertOk(slate.prdCreate({ title: "PRD 2" }));
+
+		// Create tasks for PRD 1 only
+		assertOk(slate.taskCreate({ title: "Task A", prd: prd1.id }));
+		assertOk(slate.taskCreate({ title: "Task B", prd: prd1.id }));
+
+		const result = slate.prdList();
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		const prds = result.value;
+		expect(prds.length).toBe(2);
+
+		const p1 = prds.find((p) => p.id === prd1.id);
+		const p2 = prds.find((p) => p.id === prd2.id);
+
+		expect(p1).toBeDefined();
+		expect(p2).toBeDefined();
+		if (!p1 || !p2) return;
+
+		expect(p1.status).toBe("todo");
+		expect(p2.status).toBe("todo");
+
+		// Resolve all tasks for PRD 1
+		const tasksForP1 = assertOk(slate.taskList((t) => t.prd === prd1.id));
+		for (const task of tasksForP1) {
+			slate.taskResolve(task.id);
+		}
+
+		const prds2 = assertOk(slate.prdList());
+		const p1updated = prds2.find((p) => p.id === prd1.id);
+		const p2updated = prds2.find((p) => p.id === prd2.id);
+
+		expect(p1updated).toBeDefined();
+		expect(p2updated).toBeDefined();
+		if (!p1updated || !p2updated) return;
+
+		expect(p1updated.status).toBe("done");
+		expect(p2updated.status).toBe("todo");
+	});
+
+	it("computes PRD status as 'todo' when children are all blocked", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const prdResult = slate.prdCreate({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+		const prdId = prdResult.value.id;
+
+		// Create a task that depends on a non-existent task (blocked)
+		assertOk(
+			slate.taskCreate({
+				title: "Blocked Task",
+				prd: prdId,
+				dependencies: ["task-999"],
+			}),
+		);
+
+		const prd = assertOk(slate.prdRead(prdId));
+		expect(prd.status).toBe("todo");
 	});
 });

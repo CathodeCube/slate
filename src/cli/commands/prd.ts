@@ -109,18 +109,12 @@ export function prdCreateCmd(defaultDir: string): Command {
 		"PRD priority (high, medium, low)",
 		"medium",
 	);
-	cmd.option(
-		"--status <status>",
-		"PRD status (todo, in-progress, done, blocked)",
-		"todo",
-	);
 	cmd.action(async (opts) => {
 		const slate = createSlate(defaultDir);
 
 		const result = slate.prdCreate({
 			title: opts.title,
 			priority: opts.priority as "high" | "medium" | "low",
-			status: opts.status as "todo" | "in-progress" | "done" | "blocked",
 		});
 
 		if (!result.ok) {

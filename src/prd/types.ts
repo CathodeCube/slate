@@ -12,10 +12,19 @@
 /**
  * A Product Requirements Document — a named collection of tasks that define
  * a feature or initiative.
+ *
+ * The `status` field is computed from child task statuses at read time.
+ * It is not persisted to frontmatter.
  */
 export interface PRD {
 	id: string;
 	title: string;
+	/**
+	 * Computed status derived from child task statuses:
+	 * - "done" if all children are done
+	 * - "in-progress" if any child is in-progress
+	 * - "todo" otherwise (all todo, or no children)
+	 */
 	status: PRDStatus;
 	priority: Priority;
 	created: string;
