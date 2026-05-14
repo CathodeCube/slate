@@ -15,8 +15,8 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 
 ## Quick Start
 
-- Install Bun
-- Tell your agent about Slate
+- Install [Bun](https://bun.sh/) (latest stable)
+- Tell your agent about Slate (More information below)
 
 #### Examples
 
