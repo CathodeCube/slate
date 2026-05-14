@@ -1,5 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+
+import matter from "gray-matter";
 
 import { PRDService } from "src/prd/PRDService";
 import { Slate } from "src/Slate";
@@ -363,5 +365,102 @@ describe("Slate library — integration", () => {
 		expect(queryResult.ok).toBe(true);
 		if (!queryResult.ok) return;
 		expect(queryResult.value[0].status).toBe("done");
+	});
+
+	// -- Full workflow integration test ---------------------------------------
+
+	it("full workflow: create PRD → create tasks → query → update → resolve", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		// 1. Create a PRD
+		const prdResult = slate.prdCreate({ title: "Full Workflow Test" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+		const prdId = prdResult.value.id;
+
+		// Verify PRD file on disk
+		const prdFile = join(storeDir, "prds", `${prdId}.md`);
+		expect(existsSync(prdFile)).toBe(true);
+		const prdRaw = readFileSync(prdFile, "utf-8");
+		const { data: prdData } = matter(prdRaw);
+		expect(prdData.id).toBe(prdId);
+		expect(prdData.title).toBe("Full Workflow Test");
+		expect(prdData.status).toBe("todo");
+		expect(prdData.priority).toBe("medium");
+		expect(prdData.created).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+		expect(prdData.updated).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+		// 2. Create tasks with dependencies
+		const task1 = assertOk(
+			slate.taskCreate({
+				title: "Task 1",
+				priority: "high",
+				prd: prdId,
+			}),
+		);
+		const task2 = assertOk(
+			slate.taskCreate({
+				title: "Task 2",
+				priority: "medium",
+				prd: prdId,
+				dependencies: [task1.id],
+			}),
+		);
+		const task3 = assertOk(
+			slate.taskCreate({
+				title: "Task 3",
+				priority: "low",
+				prd: prdId,
+			}),
+		);
+
+		// 3. Query tasks
+		const allTasks = assertOk(slate.taskQuery(() => true));
+		expect(allTasks.length).toBe(3);
+
+		const highPriority = assertOk(
+			slate.taskQuery((t) => t.priority === "high"),
+		);
+		expect(highPriority.length).toBe(1);
+		expect(highPriority[0].id).toBe(task1.id);
+
+		// 4. Update task status and priority
+		const updateResult = slate.taskUpdate(task1.id, {
+			status: "in-progress",
+			priority: "low",
+		});
+		expect(updateResult.ok).toBe(true);
+
+		const updatedTask = assertOk(slate.taskQuery((t) => t.id === task1.id));
+		expect(updatedTask[0].status).toBe("in-progress");
+		expect(updatedTask[0].priority).toBe("low");
+
+		// 5. Resolve task 1, which should unblock task 2
+		const resolveResult = slate.taskResolve(task1.id);
+		expect(resolveResult.ok).toBe(true);
+		if (!resolveResult.ok) return;
+		expect(resolveResult.value.unblocked).toContain(task2.id);
+
+		// Verify task 1 is done
+		const resolvedTask = assertOk(slate.taskQuery((t) => t.id === task1.id));
+		expect(resolvedTask[0].status).toBe("done");
+
+		// 6. Ad-hoc task (no PRD binding)
+		const adHoc = assertOk(
+			slate.taskCreate({ title: "Ad-hoc Task", priority: "low" }),
+		);
+		const adHocFile = join(storeDir, "tasks", `${adHoc.id}.md`);
+		expect(existsSync(adHocFile)).toBe(true);
+		const adHocRaw = readFileSync(adHocFile, "utf-8");
+		const { data: adHocData } = matter(adHocRaw);
+		expect(adHocData.prd).toBeUndefined();
+
+		// 7. Sequential ID verification
+		expect(prdId).toBe("prd-001");
+		expect(task1.id).toBe("task-001");
+		expect(task2.id).toBe("task-002");
+		expect(task3.id).toBe("task-003");
+		expect(adHoc.id).toBe("task-004");
 	});
 });

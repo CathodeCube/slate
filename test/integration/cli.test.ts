@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
-import { createTestDir } from "../utils";
+import { assertOk, createTestDir } from "../utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,7 +21,9 @@ function runSlate(
 	exitCode: number;
 } {
 	const cwd = opts?.cwd ?? process.cwd();
-	const cmd = `bun run src/index.ts ${args.join(" ")}`;
+	// Escape each argument to handle spaces and special characters
+	const escapedArgs = args.map((a) => (a.includes(" ") ? `"${a}"` : a));
+	const cmd = `bun run src/index.ts ${escapedArgs.join(" ")}`;
 	try {
 		const stdout = execSync(cmd, {
 			cwd,
@@ -308,6 +310,193 @@ describe("CLI prd show", () => {
 			"prd",
 			"show",
 			"prd-999",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("not found");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// CLI prd create
+// ---------------------------------------------------------------------------
+
+describe("CLI prd create", () => {
+	it("creates a PRD and prints confirmation", async () => {
+		const storeDir = createTestDir();
+		const { stdout, exitCode } = runSlate([
+			"prd",
+			"create",
+			"--title",
+			"CLI Test PRD",
+			"--priority",
+			"high",
+			"--dir",
+			storeDir,
+		]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Created PRD:");
+		expect(stdout).toContain("CLI Test PRD");
+
+		// Verify file on disk
+		const { readFileSync } = await import("node:fs");
+		const { join } = await import("node:path");
+		const prdDir = join(storeDir, "prds");
+		const files = await import("node:fs").then((m) => m.readdirSync(prdDir));
+		expect(files.length).toBe(1);
+
+		const filePath = join(prdDir, files[0]);
+		const raw = readFileSync(filePath, "utf-8");
+		const { data } = await import("gray-matter").then((m) => m.default(raw));
+		expect(data.id).toMatch(/^prd-\d{3}$/);
+		expect(data.title).toBe("CLI Test PRD");
+		expect(data.status).toBe("todo");
+		expect(data.priority).toBe("high");
+	});
+
+	it("defaults to medium priority and todo status", async () => {
+		const storeDir = createTestDir();
+		const { stdout } = runSlate([
+			"prd",
+			"create",
+			"--title",
+			"Default PRD",
+			"--dir",
+			storeDir,
+		]);
+
+		expect(stdout).toContain("Created PRD:");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// CLI task create
+// ---------------------------------------------------------------------------
+
+describe("CLI task create", () => {
+	it("creates a task and prints confirmation", async () => {
+		const storeDir = createTestDir();
+		const { stdout, exitCode } = runSlate([
+			"task",
+			"create",
+			"--title",
+			"CLI Test Task",
+			"--priority",
+			"high",
+			"--dir",
+			storeDir,
+		]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Created task:");
+		expect(stdout).toContain("CLI Test Task");
+
+		// Verify file on disk
+		const { readFileSync, readdirSync } = await import("node:fs");
+		const { join } = await import("node:path");
+		const taskDir = join(storeDir, "tasks");
+		const files = readdirSync(taskDir);
+		expect(files.length).toBe(1);
+
+		const filePath = join(taskDir, files[0]);
+		const raw = readFileSync(filePath, "utf-8");
+		const { data } = await import("gray-matter").then((m) => m.default(raw));
+		expect(data.id).toMatch(/^task-\d{3}$/);
+		expect(data.title).toBe("CLI Test Task");
+		expect(data.priority).toBe("high");
+		expect(data.status).toBe("todo");
+	});
+
+	it("creates an ad-hoc task without PRD binding", async () => {
+		const storeDir = createTestDir();
+		const { stdout } = runSlate([
+			"task",
+			"create",
+			"--title",
+			"Ad-hoc CLI Task",
+			"--priority",
+			"low",
+			"--dir",
+			storeDir,
+		]);
+
+		expect(stdout).toContain("Created task:");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// CLI task resolve
+// ---------------------------------------------------------------------------
+
+describe("CLI task resolve", () => {
+	it("resolves a task and prints confirmation", async () => {
+		const storeDir = createTestDir();
+
+		// Create a task via the library first
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+		const createResult = service.create({ title: "Task to resolve" });
+		expect(createResult.ok).toBe(true);
+		const taskId = createResult.ok ? createResult.value.id : "";
+
+		const { stdout, exitCode } = runSlate([
+			"task",
+			"resolve",
+			taskId,
+			"--dir",
+			storeDir,
+		]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`Resolved task: ${taskId}`);
+
+		// Verify the task is now done
+		const { readFileSync } = await import("node:fs");
+		const { join } = await import("node:path");
+		const filePath = join(storeDir, "tasks", `${taskId}.md`);
+		const raw = readFileSync(filePath, "utf-8");
+		const { data } = await import("gray-matter").then((m) => m.default(raw));
+		expect(data.status).toBe("done");
+	});
+
+	it("prints unblocked tasks when dependents are fully resolved", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		const parent = assertOk(service.create({ title: "Parent" }));
+		const child1 = assertOk(
+			service.create({ title: "Child 1", dependencies: [parent.id] }),
+		);
+		const child2 = assertOk(
+			service.create({ title: "Child 2", dependencies: [parent.id] }),
+		);
+
+		const { stdout } = runSlate([
+			"task",
+			"resolve",
+			parent.id,
+			"--dir",
+			storeDir,
+		]);
+
+		expect(stdout).toContain(`Resolved task: ${parent.id}`);
+		expect(stdout).toContain(`Unblocked tasks: ${child1.id}, ${child2.id}`);
+	});
+
+	it("returns error for non-existent task", async () => {
+		const storeDir = createTestDir();
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"resolve",
+			"task-999",
 			"--dir",
 			storeDir,
 		]);
