@@ -71,4 +71,25 @@ export class TaskService {
 
 		return { ok: true, value: task };
 	}
+
+	/**
+	 * Resolve a task by marking it as done.
+	 */
+	resolve(id: string): Result<void, TaskError> {
+		const readResult = this.store.readTask(id);
+		if (!readResult.ok) {
+			return { ok: false, error: readResult.error };
+		}
+
+		const task = readResult.value;
+		task.status = "done";
+		task.updated = new Date().toISOString();
+
+		const writeResult = this.store.createTask(task);
+		if (!writeResult.ok) {
+			return writeResult;
+		}
+
+		return { ok: true, value: undefined };
+	}
 }
