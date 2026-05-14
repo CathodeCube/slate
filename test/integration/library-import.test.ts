@@ -20,10 +20,10 @@ describe("library import", () => {
 		expect(typeof mod.Slate).toBe("function");
 	});
 
-	it("Slate class is instantiable without side effects", () => {
+	it("Slate class is instantiable without side effects", async () => {
 		// We can't easily test with a real directory here, but we verify the
 		// class is exported and callable without triggering any initialization.
-		const mod = require("src/Slate");
+		const mod = await import("src/Slate");
 		expect(typeof mod.Slate).toBe("function");
 	});
 });
