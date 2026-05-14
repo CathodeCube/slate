@@ -1,3 +1,6 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { Command } from "commander";
 import { readStdin } from "src/cli/stdin";
 import { PRDService } from "src/prd/PRDService";
@@ -336,12 +339,10 @@ export function main(): void {
 
 			// Write body to the task file if stdin was provided
 			if (stdinBody) {
-				const fs = await import("node:fs");
-				const { join } = await import("node:path");
 				const filePath = join(opts.dir, "tasks", `${result.value.id}.md`);
-				const existing = fs.readFileSync(filePath, "utf-8");
-				const fullContent = existing + stdinBody;
-				fs.writeFileSync(filePath, fullContent, "utf-8");
+				const existing = readFileSync(filePath, "utf-8");
+				const fullContent = `${existing}\n\n${stdinBody}`;
+				writeFileSync(filePath, fullContent, "utf-8");
 			}
 
 			console.log(`Created task: ${result.value.id} — ${result.value.title}`);
