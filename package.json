@@ -22,7 +22,7 @@
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",
 		"test": "vitest run"
 	},
-	"description": "A minimal, agent-native issue tracker for local projects",
+	"description": "A minimal, agent-native issue tracker",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/cathodecube/slate.git"
@@ -31,7 +31,7 @@
 		"url": "https://github.com/cathodecube/slate/issues"
 	},
 	"homepage": "https://github.com/cathodecube/slate#readme",
-	"author": "Cathode Cube (https://cathodecube.com)",
+	"author": "Cathode Cube",
 	"license": "Apache-2.0",
 	"publishConfig": {
 		"access": "public"

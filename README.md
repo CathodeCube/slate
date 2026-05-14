@@ -1,6 +1,10 @@
-# Slate
+<div align="center">
+  <img src="docs/banner.jpg" alt="Slate banner" width="100%" />
+</div>
 
-A minimal, agent-native issue tracker for local projects.
+---
+
+A minimal, agent-native issue tracker.
 
 Slate replaces clunky issue-tracking tools with a clean CLI, a first-class library, and git-friendly markdown files — designed for AI agents first, humans second.
 
