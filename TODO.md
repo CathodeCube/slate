@@ -71,8 +71,8 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 3 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** | |
 | 4 | 🟢 Feature | Remove `--dir` from all CLI commands; use hardcoded `./slate` dir ✅ | **High** | **Done** |
 | 5 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** | |
-| 6 | 🟡 Docs | Add installation instructions to README | **High** | |
-| 7 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** | |
+| 6 | 🟡 Docs | Add installation instructions to README | **High** | **Done** |
+| 7 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** | **Done** |
 | 8 | 🟡 Docs | Add CONTRIBUTING.md | **Medium** | |
 | 9 | 🟡 Robustness | Surface errors from corrupted files instead of silent skip | **Medium** | |
 | 10 | 🟡 Robustness | Handle constructor failure in `Slate` facade (propagate or throw) | **Medium** | |
