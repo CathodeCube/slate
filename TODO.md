@@ -64,21 +64,22 @@ The project is **not yet ready for a proper first release**, but the foundation 
 
 | # | Category | Item | Priority | Status |
 |---|----------|------|----------|--------|
-| 1 | 🔴 Packaging | Add `files` field to `package.json`, add `prepare`/`prepublishOnly` build script, fix or remove `bin` entry | **Blocking** |
-| 2 | 🔴 Packaging | Remove or restructure `bulb` git dependency | **Blocking** |
-| 3 | 🔴 Packaging | Add `license` field and LICENSE file | **Blocking** |
-| 4 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** |
-| 5 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) | **High** |
-| 6 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** |
-| 7 | 🟡 Docs | Add installation instructions to README | **High** |
-| 8 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** |
-| 9 | 🟡 Docs | Add CONTRIBUTING.md | **Medium** |
-| 10 | 🟡 Robustness | Surface errors from corrupted files instead of silent skip | **Medium** |
-| 11 | 🟡 Robustness | Handle constructor failure in `Slate` facade (propagate or throw) | **Medium** |
-| 12 | 🟢 Polish | Add `--version` to Commander | Low |
-| 13 | 🟢 Polish | Centralize error output / exit codes in CLI | Low |
-| 14 | 🟢 Polish | Remove `detect-cycle.ts` dead code | Low |
-| 15 | 🟢 Polish | Add colored output to CLI (chalk or similar) | Low |
+| 1 | 🔴 Packaging | Add `files` field to `package.json`, add `prepare`/`prepublishOnly` build script, fix or remove `bin` entry | **Blocking** | |
+| 1b | 🔴 Packaging | Remove `bulb` git dependency ✅ | **Blocking** | **Done** |
+| 1c | 🔴 Packaging | Add `engines.bun` field ✅ | **Blocking** | **Done** |
+| 2 | 🔴 Packaging | Add `license` field and LICENSE file | **Blocking** | |
+| 3 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** | |
+| 4 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) | **High** | |
+| 5 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** | |
+| 6 | 🟡 Docs | Add installation instructions to README | **High** | |
+| 7 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** | |
+| 8 | 🟡 Docs | Add CONTRIBUTING.md | **Medium** | |
+| 9 | 🟡 Robustness | Surface errors from corrupted files instead of silent skip | **Medium** | |
+| 10 | 🟡 Robustness | Handle constructor failure in `Slate` facade (propagate or throw) | **Medium** | |
+| 11 | 🟢 Polish | Add `--version` to Commander | Low | |
+| 12 | 🟢 Polish | Centralize error output / exit codes in CLI | Low | |
+| 13 | 🟢 Polish | Remove `detect-cycle.ts` dead code | Low | |
+| 14 | 🟢 Polish | Add colored output to CLI (chalk or similar) | Low | |
 
 ---
 
