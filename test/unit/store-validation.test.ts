@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { TaskService } from "src/task/TaskService";
-import { createTestDir } from "../utils";
+import { createEmptyIndex, createTestDir } from "../utils";
 
 // ---------------------------------------------------------------------------
 // LocalFileStore — constructor accepts any directory path
@@ -79,7 +79,7 @@ describe("createTask — already-exists check", () => {
 	it("returns already-exists error when task file already exists", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const first = service.create({ title: "First Task" });
 		expect(first.ok).toBe(true);
@@ -109,7 +109,7 @@ describe("TaskService.create — PRD validation", () => {
 	it("returns not-found error when referenced PRD does not exist", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Task with missing PRD",
@@ -125,7 +125,7 @@ describe("TaskService.create — PRD validation", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
-		const taskService = new TaskService(store);
+		const taskService = new TaskService(store, createEmptyIndex());
 
 		const prdResult = prdService.create({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
@@ -144,7 +144,7 @@ describe("TaskService.create — PRD validation", () => {
 	it("does not validate PRD when prd is not provided", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Ad-hoc task without PRD",

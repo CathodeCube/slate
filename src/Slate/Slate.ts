@@ -11,6 +11,7 @@ import { PRDService } from "src/prd/PRDService";
 import type { PRD } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import { LocalFileStore } from "src/store/LocalFileStore";
+import { buildDependencyIndex } from "src/task/DependencyIndex";
 import { TaskService } from "src/task/TaskService";
 import type { Task, TaskQueryFilter } from "src/task/types";
 import type { Result } from "src/utils/result";
@@ -62,7 +63,11 @@ export class Slate implements ISlate {
 	constructor(opts: SlateOptions) {
 		this.#store = new LocalFileStore(opts.dir);
 		this.#prds = new PRDService(this.#store);
-		this.#tasks = new TaskService(this.#store);
+		const tasksResult = this.#store.listTasks();
+		const index = tasksResult.ok
+			? buildDependencyIndex(tasksResult.value)
+			: buildDependencyIndex([]);
+		this.#tasks = new TaskService(this.#store, index);
 	}
 
 	// -- PRD operations -------------------------------------------------------

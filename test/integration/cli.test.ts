@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
-import { assertOk, createTestDir, runSlate } from "../utils";
+import { assertOk, createEmptyIndex, createTestDir, runSlate } from "../utils";
 
 // ---------------------------------------------------------------------------
 // CLI task list
@@ -16,7 +16,7 @@ describe("CLI task list", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		service.create({ title: "Task A" });
 		service.create({ title: "Task B", status: "in-progress" });
@@ -38,7 +38,7 @@ describe("CLI task list", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		service.create({ title: "Task A", status: "todo" });
 		service.create({ title: "Task B", status: "in-progress" });
@@ -76,7 +76,7 @@ describe("CLI task update", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const createResult = service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
@@ -108,7 +108,7 @@ describe("CLI task update", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const createResult = service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
@@ -153,7 +153,7 @@ describe("CLI task update", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const createResult = service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
@@ -178,7 +178,7 @@ describe("CLI task update", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const createResult = service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
@@ -401,7 +401,7 @@ describe("CLI task resolve", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 		const createResult = service.create({ title: "Task to resolve" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
@@ -432,7 +432,7 @@ describe("CLI task resolve", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const parent = assertOk(service.create({ title: "Parent" }));
 		const child1 = assertOk(
@@ -479,7 +479,7 @@ describe("CLI task delete", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const createResult = service.create({ title: "Task to delete" });
 		expect(createResult.ok).toBe(true);
@@ -543,7 +543,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create tasks with different priorities
 		assertOk(service.create({ title: "Low priority task", priority: "low" }));
@@ -566,7 +566,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a task that will be blocked (depends on non-existent task)
 		const blockingDep = assertOk(
@@ -598,7 +598,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create only done/blocked tasks
 		assertOk(service.create({ title: "Done task", status: "done" }));
@@ -616,7 +616,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a blocker task that itself is blocked (depends on a non-existent task)
 		const blocker = assertOk(
@@ -654,7 +654,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create two tasks with the same priority
 		assertOk(service.create({ title: "First task", priority: "high" }));
@@ -672,7 +672,7 @@ describe("CLI plan", () => {
 		const { TaskService } = await import("src/task/TaskService");
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		assertOk(service.create({ title: "Active task", priority: "medium" }));
 		assertOk(

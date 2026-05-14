@@ -1,8 +1,21 @@
 /**
  * DFS-based dependency cycle detection utility.
  *
- * Internal helper used by `TaskService.resolve` to detect circular
- * dependencies before marking a task as done.
+ * **DEAD CODE — not used by any caller.**
+ *
+ * Cycle detection was removed from `TaskService.resolve` because:
+ *
+ * 1. Cycles in task dependencies are a data integrity issue — they should be
+ *    prevented at task creation time, not detected at resolve time.
+ * 2. The resolve flow marks a task as done and then finds unblocked dependents;
+ *    cycle detection would add overhead without addressing the root cause.
+ * 3. If cycles exist in the data, the system should surface a clear error at
+ *    the point where the cycle was introduced (task creation/update).
+ *
+ * The `cycle-detected` variant has also been removed from `TaskError`.
+ * Keep this module as a reference implementation.
+ *
+ * @internal
  */
 
 // ---------------------------------------------------------------------------

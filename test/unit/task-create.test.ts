@@ -5,14 +5,14 @@ import matter from "gray-matter";
 import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { TaskService } from "src/task/TaskService";
-import { createTestDir } from "../utils";
+import { createEmptyIndex, createTestDir } from "../utils";
 
 describe("CLI task create — end-to-end", () => {
 	it("creates a file in slate/tasks/ with correct YAML frontmatter", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a PRD first so the task can reference it
 		const prdResult = prdService.create({ title: "Test PRD" });
@@ -52,7 +52,7 @@ describe("CLI task create — end-to-end", () => {
 	it("generates sequential IDs that increment", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result1 = service.create({ title: "First Task" });
 		const result2 = service.create({ title: "Second Task" });
@@ -73,7 +73,7 @@ describe("CLI task create — end-to-end", () => {
 	it("defaults status to todo", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({ title: "Default Status Task" });
 
@@ -86,7 +86,7 @@ describe("CLI task create — end-to-end", () => {
 	it("accepts custom priority and status", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Custom Task",
@@ -105,7 +105,7 @@ describe("CLI task create — end-to-end", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a PRD first so the task can reference it
 		const prdResult = prdService.create({ title: "Test PRD" });
@@ -132,7 +132,7 @@ describe("CLI task create — end-to-end", () => {
 	it("accepts custom dependencies", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Dependent Task",
@@ -156,7 +156,7 @@ describe("CLI task create — end-to-end", () => {
 	it("rejects empty title", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({ title: "  " });
 
@@ -169,7 +169,7 @@ describe("CLI task create — end-to-end", () => {
 	it("works without PRD (ad-hoc task)", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Ad-hoc Task",
@@ -191,7 +191,7 @@ describe("CLI task create — end-to-end", () => {
 	it("writes stdin body to the Markdown file", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({
 			title: "Task with Body",
@@ -220,7 +220,7 @@ describe("CLI task create — end-to-end", () => {
 	it("defaults priority to medium", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
+		const service = new TaskService(store, createEmptyIndex());
 
 		const result = service.create({ title: "Default Priority Task" });
 

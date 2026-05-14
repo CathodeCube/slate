@@ -8,6 +8,6 @@ export {
 	type ISlate,
 	type ResolveResult,
 	Slate,
-	SlateError,
+	type SlateError,
 	type SlateOptions,
 } from "src/Slate";

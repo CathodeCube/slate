@@ -7,6 +7,7 @@
  */
 import { Command } from "commander";
 import { createSlate } from "src/Slate/factory";
+import { buildDependencyIndex } from "src/task/DependencyIndex";
 
 // ---------------------------------------------------------------------------
 // Priority ordering
@@ -73,15 +74,8 @@ export function planCmd(defaultDir: string): Command {
 			return;
 		}
 
-		// Cache done status to avoid N+1 file reads
-		const doneCache = new Map<string, boolean>();
-		const isTaskDone = (id: string): boolean => {
-			if (!doneCache.has(id)) {
-				const readResult = slate.taskRead(id);
-				doneCache.set(id, readResult.ok && readResult.value.status === "done");
-			}
-			return doneCache.get(id) ?? false;
-		};
+		// Build a DependencyIndex for O(1) status lookups
+		const index = buildDependencyIndex(allTasks);
 
 		// Check if any task is not done/blocked (regardless of deps)
 		const hasNonDoneTask = allTasks.some(
@@ -93,7 +87,7 @@ export function planCmd(defaultDir: string): Command {
 			if (task.status === "done" || task.status === "blocked") {
 				return false;
 			}
-			return task.dependencies.every((depId) => isTaskDone(depId));
+			return task.dependencies.every((depId) => index.isDone(depId));
 		});
 
 		if (actionable.length === 0) {

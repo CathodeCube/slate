@@ -1,12 +1,12 @@
 ---
 id: task-004
 title: Extract DependencyIndex — separate dependency graph from resolve logic
-status: todo
+status: done
 priority: medium
 dependencies: []
 prd: prd-001
 created: '2026-05-13T12:41:00.335Z'
-updated: '2026-05-13T12:41:00.335Z'
+updated: '2026-05-13T13:27:22.879Z'
 ---
 
 

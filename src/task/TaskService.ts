@@ -6,6 +6,8 @@
  */
 import type { PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
+import type { DependencyIndex } from "src/task/DependencyIndex";
+import { buildDependencyIndex } from "src/task/DependencyIndex";
 import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 
@@ -32,15 +34,23 @@ export interface ResolveResult {
  * Service layer for task operations.
  *
  * Encapsulates business logic such as ID generation, default values, and
- * validation. Depends on `IStore` via constructor injection.
+ * validation. Depends on `IStore` and `DependencyIndex` via constructor injection.
  */
 export class TaskService {
+	#index: DependencyIndex;
+
 	/**
-	 * Create a new TaskService backed by the given store.
+	 * Create a new TaskService backed by the given store and dependency index.
 	 *
 	 * @param store - The store implementation used for task persistence.
+	 * @param index - The dependency index for fast dependent lookup.
 	 */
-	constructor(private store: IStore) {}
+	constructor(
+		private store: IStore,
+		index: DependencyIndex,
+	) {
+		this.#index = index;
+	}
 
 	/**
 	 * Read a task by ID.
@@ -139,11 +149,11 @@ export class TaskService {
 	}
 
 	/**
-	 * Resolve a task by marking it as done, detecting dependency cycles
-	 * and identifying dependent tasks that become unblocked.
+	 * Resolve a task by marking it as done and identifying dependent tasks
+	 * that become unblocked.
 	 *
 	 * @param id - The task ID to resolve.
-	 * @returns The resolve result with unblocked task IDs on success, or an error if the task is not found, already done, or if a cycle is detected.
+	 * @returns The resolve result with unblocked task IDs on success, or an error if the task is not found or already done.
 	 */
 	resolve(id: string): Result<ResolveResult, TaskError> {
 		const readResult = this.store.readTask(id);
@@ -167,46 +177,31 @@ export class TaskService {
 			return writeResult;
 		}
 
-		// Find dependent tasks that are now unblocked
+		// Rebuild the index to reflect the updated state
 		const listResult = this.store.listTasks();
 		if (!listResult.ok) {
 			return { ok: false, error: listResult.error };
 		}
+		const newIndex = buildDependencyIndex(listResult.value);
 
-		// Cache isTaskDone results to avoid N+1 file reads
-		const doneCache = new Map<string, boolean>();
+		// Update the stored index to reflect the new state
+		this.#index = newIndex;
+
+		// Find direct dependents that are now fully unblocked
 		const unblocked: string[] = [];
-		for (const depTask of listResult.value) {
-			if (depTask.dependencies.includes(id)) {
-				const allDone = depTask.dependencies.every((depId) => {
-					if (!doneCache.has(depId)) {
-						doneCache.set(depId, this.isTaskDone(depId));
-					}
-					const cached = doneCache.get(depId);
-					if (cached === undefined) {
-						return false;
-					}
-					return cached;
-				});
-				if (allDone) {
-					unblocked.push(depTask.id);
-				}
+		for (const depId of this.#index.getDependents(id)) {
+			const depTaskResult = this.store.readTask(depId);
+			if (!depTaskResult.ok) continue;
+
+			const allDepsDone = depTaskResult.value.dependencies.every((depId2) =>
+				this.#index.isDone(depId2),
+			);
+			if (allDepsDone) {
+				unblocked.push(depId);
 			}
 		}
 
 		return { ok: true, value: { unblocked } };
-	}
-
-	/**
-	 * Check if a task is done by reading it from the store.
-	 *
-	 * @param id - The task ID to check.
-	 * @returns True if the task status is `"done"`, false otherwise.
-	 */
-	private isTaskDone(id: string): boolean {
-		const result = this.store.readTask(id);
-		if (!result.ok) return false;
-		return result.value.status === "done";
 	}
 
 	/**

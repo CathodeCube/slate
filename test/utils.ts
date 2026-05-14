@@ -2,7 +2,8 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-
+import type { DependencyIndex } from "src/task/DependencyIndex";
+import { buildDependencyIndex } from "src/task/DependencyIndex";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
@@ -106,4 +107,16 @@ export function assertErr<E extends { kind: string }, K extends E["kind"]>(
 	const error = (r as { ok: false; error: E }).error;
 	expect(error.kind).toBe(kind);
 	return error as unknown as Extract<E, { kind: K }>;
+}
+
+// ---------------------------------------------------------------------------
+// DependencyIndex helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Create an empty DependencyIndex for use in tests that need to
+ * instantiate TaskService directly.
+ */
+export function createEmptyIndex(): DependencyIndex {
+	return buildDependencyIndex([]);
 }
