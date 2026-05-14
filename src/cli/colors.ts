@@ -1,10 +1,11 @@
 /**
  * Minimal ANSI color helpers for CLI output.
  *
- * No external dependencies. Colors are off by default for safety with
- * agent output capture (pipes, subprocesses, log files).
+ * No external dependencies. Colors are enabled by default (standard
+ * CLI convention) and disabled when output is piped.
  *
- * Enable colors by setting SLATE_COLOR=1 in the environment.
+ * To force colors regardless of output destination: SLATE_COLOR=1
+ * To force no colors regardless of output destination: SLATE_COLOR=0
  */
 
 // ---------------------------------------------------------------------------
@@ -23,13 +24,31 @@ const COLORS = {
 } as const;
 
 /**
- * Whether to apply colors. Defaults to false.
- * Set SLATE_COLOR=1 to enable.
+ * Detect whether stdout is a TTY.
+ * Returns true when running in an interactive terminal.
+ * Returns false when output is piped or captured.
  */
-let _shouldColor = false;
+function isTTY(): boolean {
+	// Bun: check isTTY on stdout
+	if (typeof process.stdout.isTTY !== "undefined") {
+		return process.stdout.isTTY === true;
+	}
+	// Node.js: use tty.isatty
+	try {
+		const { isatty } = require("node:tty");
+		return isatty(1);
+	} catch {
+		return false;
+	}
+}
 
-if (process.env.SLATE_COLOR === "1") {
-	_shouldColor = true;
+let isColorEnabled: boolean;
+if (process.env.SLATE_COLOR === "0") {
+	isColorEnabled = false;
+} else if (process.env.SLATE_COLOR === "1") {
+	isColorEnabled = true;
+} else {
+	isColorEnabled = isTTY();
 }
 
 // ---------------------------------------------------------------------------
@@ -38,7 +57,7 @@ if (process.env.SLATE_COLOR === "1") {
 
 function wrap(color: string): (str: string) => string {
 	return (str: string): string =>
-		_shouldColor ? `${color}${str}${COLORS.reset}` : str;
+		isColorEnabled ? `${color}${str}${COLORS.reset}` : str;
 }
 
 export const reset = wrap(COLORS.reset);

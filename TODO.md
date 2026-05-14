@@ -79,7 +79,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 11 | 🟢 Polish | Add `--version` to Commander ✅ | Low | **Done** |
 | 12 | 🟢 Polish | Centralize error output / exit codes in CLI ✅ | Low | **Done** |
 | 13 | 🟢 Polish | Remove `detect-cycle.ts` dead code ✅ | Low | **Done** |
-| 14 | 🟢 Polish | Add colored output to CLI (chalk or similar) | Low | |
+| 14 | 🟢 Polish | Add colored output to CLI (chalk or similar) | Low | **Done** |
 
 ---
 
