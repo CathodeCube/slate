@@ -172,6 +172,32 @@ describe("CLI task update", () => {
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("Invalid priority");
 	});
+
+	it("updates task title and writes the change to disk", async () => {
+		const projectDir = createTestDir();
+		const storeDir = join(projectDir, "slate");
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store, createEmptyIndex());
+
+		const createResult = service.create({ title: "Original title" });
+		expect(createResult.ok).toBe(true);
+		const taskId = createResult.ok ? createResult.value.id : "";
+
+		const { stdout, exitCode } = runSlate(
+			["task", "update", taskId, "--title", "New title"],
+			{ cwd: projectDir },
+		);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`Updated task: ${taskId}`);
+
+		const filePath = join(storeDir, "tasks", `${taskId}.md`);
+		const content = readFileSync(filePath, "utf-8");
+		expect(content).toContain("title: New title");
+	});
 });
 
 // ---------------------------------------------------------------------------

@@ -210,12 +210,13 @@ export class TaskService {
 	}
 
 	/**
-	 * Update a task's status and/or priority.
+	 * Update a task's status, priority, and/or title.
 	 *
 	 * @param id - The task ID to update.
 	 * @param updates - The fields to update.
 	 * @param updates.status - Optional new status value.
 	 * @param updates.priority - Optional new priority value.
+	 * @param updates.title - Optional new title value.
 	 * @returns Success on update, or an error if the task is not found or the values are invalid.
 	 */
 	update(
@@ -223,6 +224,7 @@ export class TaskService {
 		updates: {
 			status?: "todo" | "in-progress" | "done" | "blocked";
 			priority?: "high" | "medium" | "low";
+			title?: string;
 		},
 	): Result<void, TaskError> {
 		const readResult = this.store.readTask(id);
@@ -252,6 +254,17 @@ export class TaskService {
 				};
 			}
 			task.priority = updates.priority;
+		}
+
+		if (updates.title !== undefined) {
+			const title = updates.title.trim();
+			if (!title) {
+				return {
+					ok: false,
+					error: { kind: "invalid-title", message: "Title must not be empty" },
+				};
+			}
+			task.title = title;
 		}
 
 		task.updated = new Date().toISOString();

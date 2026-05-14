@@ -74,8 +74,8 @@ export function taskListCmd(defaultDir: string): Command {
 /**
  * Create the `task update` CLI command.
  *
- * Updates a task's status and/or priority by ID.
- * Requires at least one of `--status` or `--priority`.
+ * Updates a task's status, priority, and/or title by ID.
+ * Requires at least one of `--status`, `--priority`, or `--title`.
  *
  * @param defaultDir - The default store directory path to use.
  * @returns The configured Commander command.
@@ -89,12 +89,17 @@ export function taskUpdateCmd(defaultDir: string): Command {
 		"New status (todo, in-progress, done, blocked)",
 	);
 	cmd.option("--priority <priority>", "New priority (high, medium, low)");
+	cmd.option("--title <title>", "New title");
 	cmd.action(
-		async (id: string, opts: { status?: string; priority?: string }) => {
+		async (
+			id: string,
+			opts: { status?: string; priority?: string; title?: string },
+		) => {
 			const slate = createSlate(defaultDir);
 			const updates: {
 				status?: "todo" | "in-progress" | "done" | "blocked";
 				priority?: "high" | "medium" | "low";
+				title?: string;
 			} = {};
 
 			if (opts.status) {
@@ -107,10 +112,13 @@ export function taskUpdateCmd(defaultDir: string): Command {
 			if (opts.priority) {
 				updates.priority = opts.priority as "high" | "medium" | "low";
 			}
+			if (opts.title) {
+				updates.title = opts.title;
+			}
 
 			if (Object.keys(updates).length === 0) {
 				process.stderr.write(
-					"Error: Provide at least one of --status or --priority\n",
+					"Error: Provide at least one of --status, --priority, or --title\n",
 				);
 				process.exit(1);
 			}

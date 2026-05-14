@@ -126,12 +126,13 @@ export interface ISlate {
 	taskList(filter?: TaskQueryFilter): Result<Task[], SlateError>;
 
 	/**
-	 * Update a task's status and/or priority.
+	 * Update a task's status, priority, and/or title.
 	 *
 	 * @param id - The task ID to update.
 	 * @param updates - The fields to update.
 	 * @param updates.status - Optional new status value.
 	 * @param updates.priority - Optional new priority value.
+	 * @param updates.title - Optional new title value.
 	 * @returns Success on update, or a `SlateError` if the task is not found or values are invalid.
 	 */
 	taskUpdate(
@@ -139,6 +140,7 @@ export interface ISlate {
 		updates: {
 			status?: "todo" | "in-progress" | "done" | "blocked";
 			priority?: "high" | "medium" | "low";
+			title?: string;
 		},
 	): Result<void, SlateError>;
 

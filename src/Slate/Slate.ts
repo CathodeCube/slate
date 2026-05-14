@@ -145,6 +145,7 @@ export class Slate implements ISlate {
 		updates: {
 			status?: "todo" | "in-progress" | "done" | "blocked";
 			priority?: "high" | "medium" | "low";
+			title?: string;
 		},
 	): Result<void, SlateError> {
 		const result = this.#tasks.update(id, updates);

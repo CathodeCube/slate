@@ -330,6 +330,62 @@ describe("Slate library — integration", () => {
 		expect(updateResult.error.kind).toBe("task-invalid-status");
 	});
 
+	it("taskUpdate updates title", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Original title" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const updateResult = slate.taskUpdate(createResult.value.id, {
+			title: "New title",
+		});
+		expect(updateResult.ok).toBe(true);
+
+		const readResult = slate.taskRead(createResult.value.id);
+		expect(readResult.ok).toBe(true);
+		if (!readResult.ok) return;
+		expect(readResult.value.title).toBe("New title");
+	});
+
+	it("taskUpdate updates title along with status", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Original" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const updateResult = slate.taskUpdate(createResult.value.id, {
+			title: "Renamed",
+			status: "in-progress",
+		});
+		expect(updateResult.ok).toBe(true);
+
+		const readResult = slate.taskRead(createResult.value.id);
+		expect(readResult.ok).toBe(true);
+		if (!readResult.ok) return;
+		expect(readResult.value.title).toBe("Renamed");
+		expect(readResult.value.status).toBe("in-progress");
+	});
+
+	it("taskUpdate rejects empty title", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const updateResult = slate.taskUpdate(createResult.value.id, {
+			title: "   ",
+		});
+		expect(updateResult.ok).toBe(false);
+		if (updateResult.ok) return;
+		expect(updateResult.error.kind).toBe("task-invalid-title");
+	});
+
 	it("taskDelete deletes a task", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
