@@ -71,6 +71,11 @@ export function prdShowCmd(defaultDir: string): Command {
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
 					break;
+				default:
+					process.stderr.write(
+						`Error: Unknown PRD error: ${(result.error as { kind: string }).kind}\n`,
+					);
+					break;
 			}
 			process.exit(1);
 		}
@@ -131,6 +136,21 @@ export function prdCreateCmd(defaultDir: string): Command {
 				case "corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
+					);
+					break;
+				case "already-exists":
+					process.stderr.write(
+						`Error: PRD ${result.error.id} already exists\n`,
+					);
+					break;
+				case "directory-invalid":
+					process.stderr.write(
+						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
+					);
+					break;
+				default:
+					process.stderr.write(
+						`Error: Unknown PRD error: ${(result.error as { kind: string }).kind}\n`,
 					);
 					break;
 			}

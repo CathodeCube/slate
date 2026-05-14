@@ -23,7 +23,11 @@ export function readEntity<T, S>(
 	id: string,
 	ext: string,
 	schema: {
-		safeParse(data: unknown): { success: boolean; error?: { message: string } };
+		safeParse(data: unknown): {
+			success: boolean;
+			error?: { message: string };
+			data?: S;
+		};
 	},
 	mapRow: (data: S) => T,
 ):
@@ -58,8 +62,22 @@ export function readEntity<T, S>(
 	}
 
 	// At this point schemaResult is known to be a success case.
-	// We cast the data to S because the schema validation guarantees the shape.
-	const validatedData = schemaResult as unknown as { success: true; data: S };
+	// The data field is available because schema.safeParse returns { data: S } on success.
+	// We use a type assertion on 'data' only (not 'as unknown as') because the
+	// schema type signature already guarantees the data shape.
+	const validatedData = schemaResult.data;
 
-	return { ok: true, value: mapRow(validatedData.data) };
+	if (validatedData === undefined) {
+		// Unreachable — we already checked !success above.
+		return {
+			ok: false,
+			error: {
+				kind: "corrupted-file",
+				id,
+				message: "Unexpected validation result",
+			},
+		};
+	}
+
+	return { ok: true, value: mapRow(validatedData) };
 }
