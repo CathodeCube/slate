@@ -11,5 +11,6 @@ export default defineConfig({
 	test: {
 		globals: true,
 		globalSetup: ["./test/setup.ts"],
+		globalTeardown: ["./test/setup.ts"],
 	},
 });

@@ -1,18 +1,20 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-const TEST_DIR = join(import.meta.dirname, "..", "..", ".test");
+// Resolve relative to process CWD (project root) rather than import.meta.dirname,
+// which resolves to / in vitest's global setup context.
+const TEST_DIR = join(process.cwd(), ".test");
 
 export function setup() {
 	mkdirSync(TEST_DIR, { recursive: true });
-}
-
-export function teardown() {
-	if (existsSync(TEST_DIR)) {
-		rmSync(TEST_DIR, { recursive: true, force: true });
-	}
+	// Return the teardown function so vitest knows to call it.
+	return function teardown() {
+		if (existsSync(TEST_DIR)) {
+			rmSync(TEST_DIR, { recursive: true, force: true });
+		}
+	};
 }
 
 export function getTestDir(): string {
-	return TEST_DIR;
+	return join(process.cwd(), ".test");
 }
