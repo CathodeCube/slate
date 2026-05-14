@@ -22,6 +22,7 @@
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",
 		"test": "vitest run"
 	},
+	"license": "MIT",
 	"engines": {
 		"bun": ">=1.0.0"
 	},

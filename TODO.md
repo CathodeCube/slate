@@ -67,7 +67,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 1 | 🔴 Packaging | Add `files` field to `package.json` ✅ | **Blocking** | **Done** |
 | 1b | 🔴 Packaging | Remove `bulb` git dependency ✅ | **Blocking** | **Done** |
 | 1c | 🔴 Packaging | Add `engines.bun` field ✅ | **Blocking** | **Done** |
-| 2 | 🔴 Packaging | Add `license` field and LICENSE file | **Blocking** | |
+| 2 | 🔴 Packaging | Add `license` field and LICENSE file ✅ | **Blocking** | **Done** |
 | 3 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** | |
 | 4 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) | **High** | |
 | 5 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** | |
