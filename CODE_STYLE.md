@@ -164,6 +164,15 @@ import { randomUUID } from "node:crypto";
 - **Absolute imports** from project root (e.g., `import { Filesystem } from "src/Filesystem"`).
 - Group imports: stdlib → third-party → internal.
 - No default exports — use named exports only.
+- **Always use `import()` over `require()`** — the project uses bundler-style module resolution via `tsconfig.json` paths. `require()` does not resolve these aliases in Node.js and will fail at runtime. Use `await import()` for dynamic imports and `import` for static ones.
+
+```typescript
+// ✅ correct — uses dynamic import
+const mod = await import("src/Slate");
+
+// ❌ wrong — require does not resolve tsconfig paths
+const mod = require("src/Slate");
+```
 
 ### Barrel imports (module encapsulation)
 
