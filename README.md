@@ -19,7 +19,7 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 
 ## Quick Start
 
-> **Bun-only.** Slate requires Bun to run. It uses native Bun TypeScript resolution and does not support Node.js. Install [Bun](https://bun.sh/) (v1.0.0 or later) before proceeding.
+> **Bun-only.** Slate requires Bun to run. It uses native Bun TypeScript resolution and does not support Node.js. Install [Bun](https://bun.sh/) (v1.3.14 or later) before proceeding.
 
 - Install [Bun](https://bun.sh/) (latest stable)
 - Install slate globally with: `bun add -g @cathodecube/slate`
@@ -32,7 +32,7 @@ To teach your agent about Slate, add the following to your project's `AGENTS.md`
 ````markdown
 ## Slate — Project Issue Tracking
 
-This project uses [Slate](https://github.com/) for issue tracking. Slate stores PRDs and tasks as git-tracked markdown files under `slate/`.
+This project uses [Slate](https://github.com/cathodecube/slate) for issue tracking. Slate stores PRDs and tasks as git-tracked markdown files under `slate/`.
 
 **When to use Slate:** Anytime a task, issue, feature, or bug needs to be tracked — before writing code, during implementation, or when planning next steps.
 
