@@ -327,6 +327,8 @@ export class LocalFileStore implements IStore {
 	/**
 	 * Write a task file with YAML frontmatter.
 	 *
+	 * Preserves the existing body content when updating an existing file.
+	 *
 	 * @param filePath - The full path to write the task file.
 	 * @param task - The task entity to serialize.
 	 * @returns Always succeeds as errors are handled by the caller before invoking this method.
@@ -343,7 +345,13 @@ export class LocalFileStore implements IStore {
 			updated: task.updated,
 		};
 
-		const yaml = matter.stringify("", frontmatter);
+		let body = "";
+		if (existsSync(filePath)) {
+			const existing = readFileSync(filePath, "utf-8");
+			body = matter(existing).content;
+		}
+
+		const yaml = matter.stringify(body, frontmatter);
 		writeFileSync(filePath, yaml, "utf-8");
 		return { ok: true, value: undefined };
 	}

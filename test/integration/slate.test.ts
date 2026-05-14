@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import matter from "gray-matter";
@@ -283,6 +283,32 @@ describe("Slate library — integration", () => {
 		if (!readResult.ok) return;
 		expect(readResult.value.status).toBe("in-progress");
 		expect(readResult.value.priority).toBe("high");
+	});
+
+	it("taskUpdate preserves task body content", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task with body" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const taskId = createResult.value.id;
+		const taskFile = join(storeDir, "tasks", `${taskId}.md`);
+
+		// Write body content directly to the file (simulating stdin body)
+		const existing = readFileSync(taskFile, "utf-8");
+		const bodyContent = "This is the task body content.";
+		writeFileSync(taskFile, `${existing}\n\n${bodyContent}`, "utf-8");
+
+		// Update the task status
+		const updateResult = slate.taskUpdate(taskId, { status: "in-progress" });
+		expect(updateResult.ok).toBe(true);
+
+		// Verify body content is preserved
+		const after = readFileSync(taskFile, "utf-8");
+		expect(after).toContain(bodyContent);
+		expect(after).toContain("status: in-progress");
 	});
 
 	it("taskUpdate rejects invalid status", () => {
