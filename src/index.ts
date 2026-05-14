@@ -10,4 +10,6 @@ export { Slate, type SlateOptions } from "src/Slate";
 // CLI entry point (only executes when run directly, not when imported)
 import { main } from "src/cli";
 
-main();
+if (process.argv[1]?.endsWith("src/index.ts")) {
+	main();
+}

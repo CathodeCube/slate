@@ -1,11 +1,55 @@
-import { PRDService } from "src/prd/PRDService";
-import { LocalFileStore } from "src/store/LocalFileStore";
-import { TaskService } from "src/task/TaskService";
+import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
 import { createTestDir } from "../utils";
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Run the Slate CLI as a subprocess and return stdout + stderr.
+ */
+function runSlate(
+	args: string[],
+	opts?: { cwd?: string },
+): {
+	stdout: string;
+	stderr: string;
+	exitCode: number;
+} {
+	const cwd = opts?.cwd ?? process.cwd();
+	const cmd = `bun run src/index.ts ${args.join(" ")}`;
+	try {
+		const stdout = execSync(cmd, {
+			cwd,
+			encoding: "utf-8",
+			timeout: 10000,
+		});
+		return { stdout, stderr: "", exitCode: 0 };
+	} catch (e: unknown) {
+		const err = e as { stdout?: Buffer; stderr?: Buffer; status?: number };
+		return {
+			stdout: (err.stdout?.toString() ?? "").trim(),
+			stderr: (err.stderr?.toString() ?? "").trim(),
+			exitCode: err.status ?? 1,
+		};
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CLI task list
+// ---------------------------------------------------------------------------
+
 describe("CLI task list", () => {
-	it("lists all tasks when no filter is provided", () => {
+	it("lists all tasks with their metadata", async () => {
 		const storeDir = createTestDir();
+
+		// Create tasks via library
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
@@ -13,14 +57,21 @@ describe("CLI task list", () => {
 		service.create({ title: "Task B", status: "in-progress" });
 		service.create({ title: "Task C", status: "done" });
 
-		const result = service.list();
-		expect(result.ok).toBe(true);
-		if (!result.ok) return;
-		expect(result.value.length).toBe(3);
+		const { stdout } = runSlate(["task", "list", "--dir", storeDir]);
+
+		expect(stdout).toContain("task-001");
+		expect(stdout).toContain("Task A");
+		expect(stdout).toContain("task-002");
+		expect(stdout).toContain("Task B");
+		expect(stdout).toContain("task-003");
+		expect(stdout).toContain("Task C");
 	});
 
-	it("filters tasks by status", () => {
+	it("filters tasks by status", async () => {
 		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
@@ -28,201 +79,201 @@ describe("CLI task list", () => {
 		service.create({ title: "Task B", status: "in-progress" });
 		service.create({ title: "Task C", status: "done" });
 
-		const result = service.list();
-		expect(result.ok).toBe(true);
-		if (!result.ok) return;
-		const filtered = result.value.filter((t) => t.status === "in-progress");
-		expect(filtered.length).toBe(1);
-		expect(filtered[0].title).toBe("Task B");
+		const { stdout } = runSlate([
+			"task",
+			"list",
+			"--status",
+			"in-progress",
+			"--dir",
+			storeDir,
+		]);
+
+		expect(stdout).toContain("Task B");
+		expect(stdout).not.toContain("Task A");
+		expect(stdout).not.toContain("Task C");
 	});
 
-	it("returns empty array when no tasks exist", () => {
+	it("prints 'No tasks found.' when no tasks exist", async () => {
 		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
-
-		const result = service.list();
-		expect(result.ok).toBe(true);
-		if (!result.ok) return;
-		expect(result.value.length).toBe(0);
+		const { stdout } = runSlate(["task", "list", "--dir", storeDir]);
+		expect(stdout).toContain("No tasks found.");
 	});
 });
+
+// ---------------------------------------------------------------------------
+// CLI task update
+// ---------------------------------------------------------------------------
 
 describe("CLI task update", () => {
-	it("updates task status", () => {
+	it("updates task status and writes the change to disk", async () => {
 		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
 		const createResult = service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
+		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const taskId = createResult.value.id;
+		const { stdout, exitCode } = runSlate([
+			"task",
+			"update",
+			taskId,
+			"--status",
+			"in-progress",
+			"--dir",
+			storeDir,
+		]);
 
-		const updateResult = service.update(taskId, { status: "in-progress" });
-		expect(updateResult.ok).toBe(true);
-		if (!updateResult.ok) return;
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`Updated task: ${taskId}`);
 
-		const readResult = service.read(taskId);
-		expect(readResult.ok).toBe(true);
-		if (!readResult.ok) return;
-		expect(readResult.value.status).toBe("in-progress");
+		// Verify file on disk was actually updated
+		const filePath = join(storeDir, "tasks", `${taskId}.md`);
+		expect(existsSync(filePath)).toBe(true);
+		const content = readFileSync(filePath, "utf-8");
+		expect(content).toContain("in-progress");
 	});
 
-	it("updates task priority", () => {
+	it("updates task priority and writes the change to disk", async () => {
 		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
 		const createResult = service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
+		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const taskId = createResult.value.id;
+		const { stdout, exitCode } = runSlate([
+			"task",
+			"update",
+			taskId,
+			"--priority",
+			"high",
+			"--dir",
+			storeDir,
+		]);
 
-		const updateResult = service.update(taskId, { priority: "high" });
-		expect(updateResult.ok).toBe(true);
-		if (!updateResult.ok) return;
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`Updated task: ${taskId}`);
 
-		const readResult = service.read(taskId);
-		expect(readResult.ok).toBe(true);
-		if (!readResult.ok) return;
-		expect(readResult.value.priority).toBe("high");
+		const filePath = join(storeDir, "tasks", `${taskId}.md`);
+		const content = readFileSync(filePath, "utf-8");
+		expect(content).toContain("high");
 	});
 
-	it("updates both status and priority", () => {
+	it("returns error for non-existent task", async () => {
 		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
-
-		const createResult = service.create({
-			title: "Task to update",
-			status: "todo",
-			priority: "low",
-		});
-		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
-
-		const taskId = createResult.value.id;
-
-		const updateResult = service.update(taskId, {
-			status: "done",
-			priority: "high",
-		});
-		expect(updateResult.ok).toBe(true);
-		if (!updateResult.ok) return;
-
-		const readResult = service.read(taskId);
-		expect(readResult.ok).toBe(true);
-		if (!readResult.ok) return;
-		expect(readResult.value.status).toBe("done");
-		expect(readResult.value.priority).toBe("high");
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"update",
+			"task-999",
+			"--status",
+			"done",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("not found");
 	});
 
-	it("returns not-found for non-existent task", () => {
+	it("rejects invalid status", async () => {
 		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
 
-		const result = service.update("task-999", { status: "done" });
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.error.kind).toBe("not-found");
-	});
-
-	it("rejects invalid status", () => {
-		const storeDir = createTestDir();
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
 		const createResult = service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
+		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const result = service.update(createResult.value.id, {
-			status: "invalid" as "todo" | "in-progress" | "done" | "blocked",
-		});
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.error.kind).toBe("invalid-status");
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"update",
+			taskId,
+			"--status",
+			"invalid",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("Invalid status");
 	});
 
-	it("rejects invalid priority", () => {
+	it("rejects invalid priority", async () => {
 		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store);
 
 		const createResult = service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
+		const taskId = createResult.ok ? createResult.value.id : "";
 
-		const result = service.update(createResult.value.id, {
-			priority: "invalid" as "high" | "medium" | "low",
-		});
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.error.kind).toBe("invalid-priority");
-	});
-
-	it("updates the updated timestamp", () => {
-		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new TaskService(store);
-
-		const createResult = service.create({ title: "Task" });
-		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
-
-		const _originalUpdated = createResult.value.updated;
-
-		// Wait a moment to ensure timestamp changes
-		// eslint-disable-next-line no-void
-		void new Promise((r) => setTimeout(r, 10));
-
-		const updateResult = service.update(createResult.value.id, {
-			status: "done",
-		});
-		expect(updateResult.ok).toBe(true);
-		if (!updateResult.ok) return;
-
-		const readResult = service.read(createResult.value.id);
-		expect(readResult.ok).toBe(true);
-		if (!readResult.ok) return;
-		expect(readResult.value.updated).toBeDefined();
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"update",
+			taskId,
+			"--priority",
+			"invalid",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("Invalid priority");
 	});
 });
 
+// ---------------------------------------------------------------------------
+// CLI prd list
+// ---------------------------------------------------------------------------
+
 describe("CLI prd list", () => {
-	it("lists all PRDs", () => {
+	it("lists all PRDs", async () => {
 		const storeDir = createTestDir();
+
+		const { PRDService } = await import("src/prd/PRDService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
 		service.create({ title: "PRD A" });
 		service.create({ title: "PRD B" });
 
-		const result = service.list();
-		expect(result.ok).toBe(true);
-		if (!result.ok) return;
-		expect(result.value.length).toBe(2);
+		const { stdout } = runSlate(["prd", "list", "--dir", storeDir]);
+
+		expect(stdout).toContain("prd-001");
+		expect(stdout).toContain("PRD A");
+		expect(stdout).toContain("prd-002");
+		expect(stdout).toContain("PRD B");
 	});
 
-	it("returns empty array when no PRDs exist", () => {
+	it("prints 'No PRDs found.' when no PRDs exist", async () => {
 		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new PRDService(store);
-
-		const result = service.list();
-		expect(result.ok).toBe(true);
-		if (!result.ok) return;
-		expect(result.value.length).toBe(0);
+		const { stdout } = runSlate(["prd", "list", "--dir", storeDir]);
+		expect(stdout).toContain("No PRDs found.");
 	});
 });
 
+// ---------------------------------------------------------------------------
+// CLI prd show
+// ---------------------------------------------------------------------------
+
 describe("CLI prd show", () => {
-	it("displays full PRD details", () => {
+	it("displays PRD full details", async () => {
 		const storeDir = createTestDir();
+
+		const { PRDService } = await import("src/prd/PRDService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
@@ -232,26 +283,35 @@ describe("CLI prd show", () => {
 			priority: "high",
 		});
 		expect(createResult.ok).toBe(true);
-		if (!createResult.ok) return;
+		const prdId = createResult.ok ? createResult.value.id : "";
 
-		const prdId = createResult.value.id;
+		const { stdout, exitCode } = runSlate([
+			"prd",
+			"show",
+			prdId,
+			"--dir",
+			storeDir,
+		]);
 
-		const showResult = service.read(prdId);
-		expect(showResult.ok).toBe(true);
-		if (!showResult.ok) return;
-		expect(showResult.value.title).toBe("Test PRD");
-		expect(showResult.value.status).toBe("in-progress");
-		expect(showResult.value.priority).toBe("high");
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`ID:       ${prdId}`);
+		expect(stdout).toContain("Title:    Test PRD");
+		expect(stdout).toContain("Status:   in-progress");
+		expect(stdout).toContain("Priority: high");
+		expect(stdout).toContain("Created:");
+		expect(stdout).toContain("Updated:");
 	});
 
-	it("returns not-found for non-existent PRD", () => {
+	it("returns error for non-existent PRD", async () => {
 		const storeDir = createTestDir();
-		const store = new LocalFileStore(storeDir);
-		const service = new PRDService(store);
-
-		const result = service.read("prd-999");
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.error.kind).toBe("not-found");
+		const { stderr, exitCode } = runSlate([
+			"prd",
+			"show",
+			"prd-999",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("not found");
 	});
 });
