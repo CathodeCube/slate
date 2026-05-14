@@ -14,6 +14,20 @@ export class TaskService {
 	constructor(private store: IStore) {}
 
 	/**
+	 * Read a task by ID.
+	 */
+	read(id: string): Result<Task, TaskError> {
+		return this.store.readTask(id);
+	}
+
+	/**
+	 * List all tasks from the store.
+	 */
+	list(): Result<Task[], TaskError> {
+		return this.store.listTasks();
+	}
+
+	/**
 	 * Create a new task with default values.
 	 */
 	create(params: {
@@ -83,6 +97,55 @@ export class TaskService {
 
 		const task = readResult.value;
 		task.status = "done";
+		task.updated = new Date().toISOString();
+
+		const writeResult = this.store.createTask(task);
+		if (!writeResult.ok) {
+			return writeResult;
+		}
+
+		return { ok: true, value: undefined };
+	}
+
+	/**
+	 * Update a task's status and/or priority.
+	 */
+	update(
+		id: string,
+		updates: {
+			status?: "todo" | "in-progress" | "done" | "blocked";
+			priority?: "high" | "medium" | "low";
+		},
+	): Result<void, TaskError> {
+		const readResult = this.store.readTask(id);
+		if (!readResult.ok) {
+			return { ok: false, error: readResult.error };
+		}
+
+		const task = readResult.value;
+
+		if (updates.status !== undefined) {
+			if (
+				!["todo", "in-progress", "done", "blocked"].includes(updates.status)
+			) {
+				return {
+					ok: false,
+					error: { kind: "invalid-status", status: updates.status },
+				};
+			}
+			task.status = updates.status;
+		}
+
+		if (updates.priority !== undefined) {
+			if (!["high", "medium", "low"].includes(updates.priority)) {
+				return {
+					ok: false,
+					error: { kind: "invalid-priority", priority: updates.priority },
+				};
+			}
+			task.priority = updates.priority;
+		}
+
 		task.updated = new Date().toISOString();
 
 		const writeResult = this.store.createTask(task);

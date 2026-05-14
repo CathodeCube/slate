@@ -14,6 +14,20 @@ export class PRDService {
 	constructor(private store: IStore) {}
 
 	/**
+	 * Read a PRD by ID.
+	 */
+	read(id: string): Result<PRD, PRDError> {
+		return this.store.readPRD(id);
+	}
+
+	/**
+	 * List all PRDs from the store.
+	 */
+	list(): Result<PRD[], PRDError> {
+		return this.store.listPRDs();
+	}
+
+	/**
 	 * Create a new PRD with default values.
 	 */
 	create(params: {

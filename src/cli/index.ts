@@ -1,4 +1,6 @@
 import { Command } from "commander";
+import { registerPrdCommands } from "src/cli/commands/prd";
+import { registerTaskCommands } from "src/cli/commands/task";
 import { readStdin } from "src/cli/stdin";
 import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
@@ -25,6 +27,12 @@ export function main(): void {
 	// -- prd subcommand -------------------------------------------------------
 	const prdCmd = new Command("prd");
 	prdCmd.description("PRD management commands");
+
+	// -- prd list ------------------------------------------------------------
+	registerPrdCommands(prdCmd, () => {
+		const store = new LocalFileStore(defaultStoreDir);
+		return new PRDService(store);
+	});
 
 	// -- prd create ------------------------------------------------------------
 	const prdCreateCmd = new Command("create");
@@ -83,6 +91,12 @@ export function main(): void {
 	// -- task subcommand ------------------------------------------------------
 	const taskCmd = new Command("task");
 	taskCmd.description("Task management commands");
+
+	// -- task list ------------------------------------------------------------
+	registerTaskCommands(taskCmd, () => {
+		const store = new LocalFileStore(defaultStoreDir);
+		return new TaskService(store);
+	});
 
 	// -- task create ------------------------------------------------------------
 	const taskCreateCmd = new Command("create");
