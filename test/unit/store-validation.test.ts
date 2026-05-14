@@ -7,6 +7,45 @@ import { TaskService } from "src/task/TaskService";
 import { createEmptyIndex, createTestDir } from "../utils";
 
 // ---------------------------------------------------------------------------
+// listEntities — corrupted file warning
+// ---------------------------------------------------------------------------
+
+describe("LocalFileStore — corrupted file warning", () => {
+	it("logs a warning when a PRD file has invalid frontmatter", () => {
+		const storeDir = createTestDir();
+		const store = new LocalFileStore(storeDir);
+
+		// Create a valid PRD first so the prds/ directory exists
+		const prdService = new PRDService(store);
+		const validPRD = prdService.create({ title: "Valid PRD" });
+		expect(validPRD.ok).toBe(true);
+		if (!validPRD.ok) return;
+
+		// Write a corrupted PRD file (missing required fields)
+		const corruptedFile = join(storeDir, "prds", "prd-999.md");
+		writeFileSync(
+			corruptedFile,
+			"---\nid: prd-999\nstatus: todo\n---\ncorrupted body\n",
+			"utf-8",
+		);
+
+		const warnSpy = vi.spyOn(global.console, "warn");
+
+		const result = store.listPRDs();
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.length).toBe(1);
+		expect(result.value[0].id).toBe(validPRD.value.id);
+
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Skipping corrupted entity file"),
+		);
+
+		warnSpy.mockRestore();
+	});
+});
+
+// ---------------------------------------------------------------------------
 // LocalFileStore — constructor accepts any directory path
 // ---------------------------------------------------------------------------
 
