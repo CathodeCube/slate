@@ -581,3 +581,158 @@ describe("CLI task delete", () => {
 		expect(stderr).toContain("not found");
 	});
 });
+
+// ---------------------------------------------------------------------------
+// CLI plan
+// ---------------------------------------------------------------------------
+
+describe("CLI plan", () => {
+	it("shows the highest-priority actionable task", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		// Create tasks with different priorities
+		assertOk(service.create({ title: "Low priority task", priority: "low" }));
+		assertOk(service.create({ title: "High priority task", priority: "high" }));
+		assertOk(
+			service.create({ title: "Medium priority task", priority: "medium" }),
+		);
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("High priority task");
+		expect(stdout).not.toContain("Low priority task");
+		expect(stdout).not.toContain("Medium priority task");
+	});
+
+	it("shows the next actionable task when some are blocked", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		// Create a task that will be blocked (depends on non-existent task)
+		const blockingDep = assertOk(
+			service.create({ title: "Blocking dep", priority: "low" }),
+		);
+		// This task depends on blockingDep which is NOT done, so it's blocked
+		const blocked = assertOk(
+			service.create({
+				title: "Blocked task",
+				priority: "high",
+				dependencies: [blockingDep.id],
+			}),
+		);
+		// This task has no deps, so it's actionable (medium priority)
+		const actionable = assertOk(
+			service.create({ title: "Actionable task", priority: "medium" }),
+		);
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(actionable.title);
+		expect(stdout).not.toContain(blocked.title);
+	});
+
+	it("prints message when no actionable tasks exist", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		// Create only done/blocked tasks
+		assertOk(service.create({ title: "Done task", status: "done" }));
+		assertOk(service.create({ title: "Blocked task", status: "blocked" }));
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("No actionable tasks");
+	});
+
+	it("prints message when all tasks are blocked", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		// Create a blocker task that itself is blocked (depends on a non-existent task)
+		const blocker = assertOk(
+			service.create({
+				title: "Blocker task",
+				priority: "high",
+				dependencies: ["task-999"],
+			}),
+		);
+		// All other tasks depend on blocker, so they are blocked too
+		assertOk(
+			service.create({
+				title: "Task A",
+				priority: "high",
+				dependencies: [blocker.id],
+			}),
+		);
+		assertOk(
+			service.create({
+				title: "Task B",
+				priority: "medium",
+				dependencies: [blocker.id],
+			}),
+		);
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("No unblocked tasks");
+	});
+
+	it("respects creation order when priorities are equal", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		// Create two tasks with the same priority
+		assertOk(service.create({ title: "First task", priority: "high" }));
+		assertOk(service.create({ title: "Second task", priority: "high" }));
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("First task");
+	});
+
+	it("excludes done tasks from actionable list", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		assertOk(service.create({ title: "Active task", priority: "medium" }));
+		assertOk(
+			service.create({ title: "Done task", status: "done", priority: "high" }),
+		);
+
+		const { stdout, exitCode } = runSlate(["plan", "--dir", storeDir]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("Active task");
+		expect(stdout).not.toContain("Done task");
+	});
+});

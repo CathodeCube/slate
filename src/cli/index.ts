@@ -1,5 +1,5 @@
 import { Command } from "commander";
-
+import { planCmd } from "src/cli/commands/plan";
 import { prdCreateCmd, prdListCmd, prdShowCmd } from "src/cli/commands/prd";
 import {
 	taskCreateCmd,
@@ -28,6 +28,9 @@ export function main(): void {
 		.name("slate")
 		.description("A minimal, agent-native issue tracker")
 		.version("0.0.1");
+
+	// -- plan command ---------------------------------------------------------
+	program.addCommand(planCmd(DEFAULT_STORE_DIR));
 
 	// -- prd subcommand -------------------------------------------------------
 	const prdCmd = new Command("prd");
