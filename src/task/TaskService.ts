@@ -210,6 +210,23 @@ export class TaskService {
 	}
 
 	/**
+	 * Delete a task by ID.
+	 */
+	delete(id: string): Result<void, TaskError> {
+		const readResult = this.store.readTask(id);
+		if (!readResult.ok) {
+			return { ok: false, error: readResult.error };
+		}
+
+		const deleteResult = this.store.deleteTask(id);
+		if (!deleteResult.ok) {
+			return { ok: false, error: deleteResult.error };
+		}
+
+		return { ok: true, value: undefined };
+	}
+
+	/**
 	 * Update a task's status and/or priority.
 	 */
 	update(

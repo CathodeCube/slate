@@ -56,4 +56,9 @@ export interface IStore {
 	 * Generate the next sequential task ID.
 	 */
 	nextTaskID(): string;
+
+	/**
+	 * Delete a task file from the store.
+	 */
+	deleteTask(id: string): Result<void, TaskError>;
 }

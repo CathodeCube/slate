@@ -504,3 +504,67 @@ describe("CLI task resolve", () => {
 		expect(stderr).toContain("not found");
 	});
 });
+
+// ---------------------------------------------------------------------------
+// CLI task delete
+// ---------------------------------------------------------------------------
+
+describe("CLI task delete", () => {
+	it("deletes a task file and prints confirmation", async () => {
+		const storeDir = createTestDir();
+
+		const { TaskService } = await import("src/task/TaskService");
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
+		const store = new LocalFileStore(storeDir);
+		const service = new TaskService(store);
+
+		const createResult = service.create({ title: "Task to delete" });
+		expect(createResult.ok).toBe(true);
+		const taskId = createResult.ok ? createResult.value.id : "";
+
+		// Verify file exists before deletion
+		const filePath = join(storeDir, "tasks", `${taskId}.md`);
+		expect(existsSync(filePath)).toBe(true);
+
+		const { stdout, exitCode } = runSlate([
+			"task",
+			"delete",
+			taskId,
+			"--dir",
+			storeDir,
+		]);
+
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain(`Deleted task: ${taskId}`);
+
+		// Verify file is removed from disk
+		expect(existsSync(filePath)).toBe(false);
+	});
+
+	it("returns error for non-existent task", async () => {
+		const storeDir = createTestDir();
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"delete",
+			"task-999",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("not found");
+	});
+
+	it("returns error when store directory does not exist", async () => {
+		const storeDir = createTestDir();
+		// Don't create any tasks — just try to delete from empty store
+		const { stderr, exitCode } = runSlate([
+			"task",
+			"delete",
+			"task-001",
+			"--dir",
+			storeDir,
+		]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("not found");
+	});
+});

@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	unlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -175,6 +176,21 @@ export class LocalFileStore implements IStore {
 	}
 
 	// -- Task operations ------------------------------------------------------
+
+	deleteTask(id: string): Result<void, TaskError> {
+		const taskDir = join(this.#dir, TASK_DIR);
+		if (!existsSync(taskDir)) {
+			return { ok: false, error: { kind: "not-found", id } };
+		}
+
+		const filePath = join(taskDir, `${id}${TASK_FILE_EXT}`);
+		if (!existsSync(filePath)) {
+			return { ok: false, error: { kind: "not-found", id } };
+		}
+
+		unlinkSync(filePath);
+		return { ok: true, value: undefined };
+	}
 
 	private ensureTaskDir(): void {
 		const taskDir = join(this.#dir, TASK_DIR);

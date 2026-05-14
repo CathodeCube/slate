@@ -389,6 +389,37 @@ export function main(): void {
 		});
 
 	taskCmd.addCommand(taskResolveCmd);
+
+	// -- task delete -------------------------------------------------------
+	const taskDeleteCmd = new Command("delete");
+	taskDeleteCmd
+		.description("Delete a task")
+		.argument("<id>", "Task ID")
+		.option("--dir <dir>", "Store directory", defaultStoreDir)
+		.action(async (id: string, opts: { dir: string }) => {
+			const store = new LocalFileStore(opts.dir);
+			const service = new TaskService(store);
+
+			const result = service.delete(id);
+
+			if (!result.ok) {
+				switch (result.error.kind) {
+					case "not-found":
+						process.stderr.write(`Error: Task ${result.error.id} not found\n`);
+						break;
+					case "corrupted-file":
+						process.stderr.write(
+							`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
+						);
+						break;
+				}
+				process.exit(1);
+			}
+
+			console.log(`Deleted task: ${id}`);
+		});
+
+	taskCmd.addCommand(taskDeleteCmd);
 	program.addCommand(taskCmd);
 
 	program.parse();
