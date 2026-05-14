@@ -15,25 +15,59 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 
 ## Quick Start
 
+- Install Bun
+- Tell your agent about Slate
+
+#### Examples
+
 ```bash
 # Create a PRD
-slate prd create --title "My Feature"
+bunx slate prd create --title "My Feature"
 
 # Create a task under that PRD (body via stdin)
-echo "Implement the CLI parser with arg parsing." | slate task create --title "Implement CLI parser" --prd <prd-id> --priority high
+echo "Implement the CLI parser with arg parsing." | bunx slate task create --title "Implement CLI parser" --prd <prd-id> --priority high
 
 # Body is optional — a task with just a title is valid
-slate task create --title "Quick note" --priority low
+bunx slate task create --title "Quick note" --priority low
 
 # List all tasks
-slate task list
+bunx slate task list
 
 # Update a task status
-slate task update <task-id> --status in-progress
+bunx slate task update <task-id> --status in-progress
 
 # Close a task
-slate task update <task-id> --status done
+bunx slate task update <task-id> --status done
 ```
+
+#### Configuring Your Agent
+
+To teach your agent about Slate, add the following to your project's `AGENTS.md`:
+
+````markdown
+## Slate — Project Issue Tracking
+
+This project uses [Slate](https://github.com/) for issue tracking. Slate stores PRDs and tasks as git-tracked markdown files under `slate/`.
+
+**When to use Slate:** Anytime a task, issue, feature, or bug needs to be tracked — before writing code, during implementation, or when planning next steps.
+
+**How to learn Slate's commands:**
+
+```bash
+bunx slate overview
+```
+
+Run this command to get a full overview of available commands. The output includes examples for creating PRDs and tasks (including multi-line bodies via stdin), listing tasks, updating status, and finding the next actionable task.
+
+**Key workflow:**
+
+1. `bunx slate init` — Initialize the `slate/` directory if not already done.
+2. `bunx slate prd create --title "..."` — Create a PRD for the feature.
+3. `bunx slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
+4. `bunx slate plan` — Find the next actionable task.
+5. `bunx slate task update <id> --status in-progress` — When starting work.
+6. `bunx slate task update <id> --status done` — When finished.
+````
 
 ## Architecture
 
@@ -99,35 +133,6 @@ const actionable = await slate.tasks.query({
 ## Roadmap
 
 See [ROADMAP.md](./ROADMAP.md) for the phased feature plan.
-
-### Configuring Your Agent
-
-To teach your agent about Slate, add the following to your project's `AGENTS.md`:
-
-````markdown
-## Slate — Project Issue Tracking
-
-This project uses [Slate](https://github.com/) for issue tracking. Slate stores PRDs and tasks as git-tracked markdown files under `slate/`.
-
-**When to use Slate:** Anytime a task, issue, feature, or bug needs to be tracked — before writing code, during implementation, or when planning next steps.
-
-**How to learn Slate's commands:**
-
-```bash
-bunx slate overview
-```
-
-Run this command to get a full overview of available commands. The output includes examples for creating PRDs and tasks (including multi-line bodies via stdin), listing tasks, updating status, and finding the next actionable task.
-
-**Key workflow:**
-
-1. `bunx slate init` — Initialize the `slate/` directory if not already done.
-2. `bunx slate prd create --title "..."` — Create a PRD for the feature.
-3. `bunx slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
-4. `bunx slate plan` — Find the next actionable task.
-5. `bunx slate task update <id> --status in-progress` — When starting work.
-6. `bunx slate task update <id> --status done` — When finished.
-````
 
 ## Domain Glossary
 
