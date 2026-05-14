@@ -1,12 +1,12 @@
 ---
 id: task-002
 title: Extract store factory — remove LocalFileStore duplication from CLI commands
-status: todo
+status: done
 priority: medium
 dependencies: []
 prd: prd-001
 created: '2026-05-13T12:40:47.938Z'
-updated: '2026-05-13T12:40:47.938Z'
+updated: '2026-05-13T12:59:36.006Z'
 ---
 
 
