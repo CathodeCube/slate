@@ -2,7 +2,7 @@ import { PRDService } from "src/prd/PRDService";
 import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import { LocalFileStore } from "src/store/LocalFileStore";
-import type { Task, TaskError, TaskQueryFilter } from "src/task";
+import type { ResolveResult, Task, TaskError, TaskQueryFilter } from "src/task";
 import { TaskService } from "src/task/TaskService";
 import type { Result } from "src/utils/result";
 
@@ -87,8 +87,22 @@ export class Slate {
 
 	/**
 	 * Resolve (mark as done) a task by ID.
+	 * Returns the list of dependent tasks that became unblocked.
 	 */
-	taskResolve(id: string): Result<void, TaskError> {
+	taskResolve(id: string): Result<ResolveResult, TaskError> {
 		return this.tasks.resolve(id);
+	}
+
+	/**
+	 * Update a task's status and/or priority.
+	 */
+	taskUpdate(
+		id: string,
+		updates: {
+			status?: "todo" | "in-progress" | "done" | "blocked";
+			priority?: "high" | "medium" | "low";
+		},
+	): Result<void, TaskError> {
+		return this.tasks.update(id, updates);
 	}
 }

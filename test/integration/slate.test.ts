@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { PRDService } from "src/prd/PRDService";
 import { Slate } from "src/Slate";
 import { LocalFileStore } from "src/store/LocalFileStore";
@@ -223,5 +226,142 @@ describe("Slate library — integration", () => {
 
 		expect(prd.status).toBe("todo");
 		expect(task.status).toBe("todo");
+	});
+
+	// -- Dependency resolution tests ----------------------------------------
+
+	it("taskResolve marks a task as done and updates the file", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task to resolve" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const taskId = createResult.value.id;
+
+		// Read file before
+		const taskFile = join(storeDir, "tasks", `${taskId}.md`);
+		const before = readFileSync(taskFile, "utf-8");
+		const beforeUpdated = before.match(/updated: (.+)/);
+
+		const resolveResult = slate.taskResolve(taskId);
+		expect(resolveResult.ok).toBe(true);
+		if (!resolveResult.ok) return;
+
+		// Verify the task is now done
+		const queryResult = slate.taskQuery((t) => t.id === taskId);
+		expect(queryResult.ok).toBe(true);
+		if (!queryResult.ok) return;
+		expect(queryResult.value.length).toBe(1);
+		expect(queryResult.value[0].status).toBe("done");
+
+		// Verify the file was updated
+		const after = readFileSync(taskFile, "utf-8");
+		const afterUpdated = after.match(/updated: (.+)/);
+		expect(afterUpdated).toBeDefined();
+		if (beforeUpdated && afterUpdated) {
+			expect(afterUpdated[1]).not.toBe(beforeUpdated[1]);
+		}
+	});
+
+	it("taskResolve returns unblocked tasks when dependents are fully resolved", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		// Create two tasks that depend on a common parent
+		const parentResult = slate.taskCreate({ title: "Parent" });
+		expect(parentResult.ok).toBe(true);
+		if (!parentResult.ok) return;
+
+		const child1Result = slate.taskCreate({
+			title: "Child 1",
+			dependencies: [parentResult.value.id],
+		});
+		expect(child1Result.ok).toBe(true);
+		if (!child1Result.ok) return;
+
+		const child2Result = slate.taskCreate({
+			title: "Child 2",
+			dependencies: [parentResult.value.id],
+		});
+		expect(child2Result.ok).toBe(true);
+		if (!child2Result.ok) return;
+
+		// Resolve the parent — both children should be unblocked
+		const resolveResult = slate.taskResolve(parentResult.value.id);
+		expect(resolveResult.ok).toBe(true);
+		if (!resolveResult.ok) return;
+
+		expect(resolveResult.value.unblocked).toContain(child1Result.value.id);
+		expect(resolveResult.value.unblocked).toContain(child2Result.value.id);
+	});
+
+	it("taskResolve returns empty unblocked list when no dependents", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Standalone" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const resolveResult = slate.taskResolve(createResult.value.id);
+		expect(resolveResult.ok).toBe(true);
+		if (!resolveResult.ok) return;
+
+		expect(resolveResult.value.unblocked).toEqual([]);
+	});
+
+	it("taskResolve detects and rejects dependency cycles", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		// Create tasks: A -> B -> C -> A (cycle)
+		const taskA = assertOk(slate.taskCreate({ title: "Task A" }));
+		const taskB = assertOk(
+			slate.taskCreate({ title: "Task B", dependencies: [taskA.id] }),
+		);
+		const taskC = assertOk(
+			slate.taskCreate({ title: "Task C", dependencies: [taskB.id] }),
+		);
+		// Make task A depend on task C to create a cycle using the store directly
+		const store = new LocalFileStore(storeDir);
+		const readA = store.readTask(taskA.id);
+		if (!readA.ok) return;
+		readA.value.dependencies = [taskC.id];
+		readA.value.updated = new Date().toISOString();
+		store.createTask(readA.value);
+
+		const result = slate.taskResolve(taskA.id);
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error.kind).toBe("cycle-detected");
+		if (result.error.kind !== "cycle-detected") return;
+		expect(result.error.cycle.length).toBeGreaterThan(0);
+	});
+
+	it("taskResolve does not resolve when dependencies are not all done", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const parent = assertOk(slate.taskCreate({ title: "Parent" }));
+		const child = assertOk(
+			slate.taskCreate({
+				title: "Child",
+				dependencies: [parent.id],
+			}),
+		);
+
+		// Child depends on parent, but parent is not done
+		const resolveResult = slate.taskResolve(child.id);
+		expect(resolveResult.ok).toBe(true);
+		if (!resolveResult.ok) return;
+
+		// Verify child is done but no tasks were unblocked
+		expect(resolveResult.value.unblocked).toEqual([]);
+		const queryResult = slate.taskQuery((t) => t.id === child.id);
+		expect(queryResult.ok).toBe(true);
+		if (!queryResult.ok) return;
+		expect(queryResult.value[0].status).toBe("done");
 	});
 });

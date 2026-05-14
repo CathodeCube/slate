@@ -348,6 +348,46 @@ export function main(): void {
 		});
 
 	taskCmd.addCommand(taskCreateCmd);
+
+	// -- task resolve --------------------------------------------------------
+	const taskResolveCmd = new Command("resolve");
+	taskResolveCmd
+		.description("Resolve a task (mark as done)")
+		.argument("<id>", "Task ID")
+		.option("--dir <dir>", "Store directory", defaultStoreDir)
+		.action(async (id: string, opts: { dir: string }) => {
+			const store = new LocalFileStore(opts.dir);
+			const service = new TaskService(store);
+
+			const result = service.resolve(id);
+
+			if (!result.ok) {
+				switch (result.error.kind) {
+					case "not-found":
+						process.stderr.write(`Error: Task ${result.error.id} not found\n`);
+						break;
+					case "cycle-detected":
+						process.stderr.write(
+							`Error: Dependency cycle detected: ${result.error.cycle.join(" -> ")}\n`,
+						);
+						break;
+					case "corrupted-file":
+						process.stderr.write(
+							`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
+						);
+						break;
+				}
+				process.exit(1);
+			}
+
+			const unblocked = result.value.unblocked;
+			console.log(`Resolved task: ${id}`);
+			if (unblocked.length > 0) {
+				console.log(`Unblocked tasks: ${unblocked.join(", ")}`);
+			}
+		});
+
+	taskCmd.addCommand(taskResolveCmd);
 	program.addCommand(taskCmd);
 
 	program.parse();

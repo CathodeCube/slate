@@ -57,7 +57,8 @@ export type TaskError =
 	| { kind: "invalid-title"; message: string }
 	| { kind: "invalid-status"; status: string }
 	| { kind: "invalid-priority"; priority: string }
-	| { kind: "corrupted-file"; id: string; message: string };
+	| { kind: "corrupted-file"; id: string; message: string }
+	| { kind: "cycle-detected"; cycle: string[] };
 
 // ---------------------------------------------------------------------------
 // Task query helpers
