@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import matter from "gray-matter";
+import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { TaskService } from "src/task/TaskService";
 import { createTestDir } from "../utils";
@@ -10,12 +11,18 @@ describe("CLI task create — end-to-end", () => {
 	it("creates a file in slate/tasks/ with correct YAML frontmatter", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
+		const prdService = new PRDService(store);
 		const service = new TaskService(store);
+
+		// Create a PRD first so the task can reference it
+		const prdResult = prdService.create({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
 
 		const result = service.create({
 			title: "Test Task",
 			priority: "high",
-			prd: "prd-001",
+			prd: prdResult.value.id,
 		});
 
 		expect(result.ok).toBe(true);
@@ -97,11 +104,17 @@ describe("CLI task create — end-to-end", () => {
 	it("stores PRD reference in frontmatter", () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
+		const prdService = new PRDService(store);
 		const service = new TaskService(store);
+
+		// Create a PRD first so the task can reference it
+		const prdResult = prdService.create({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
 
 		const result = service.create({
 			title: "PRD-bound Task",
-			prd: "prd-042",
+			prd: prdResult.value.id,
 		});
 
 		expect(result.ok).toBe(true);
@@ -113,7 +126,7 @@ describe("CLI task create — end-to-end", () => {
 		const raw = readFileSync(filePath, "utf-8");
 		const { data } = matter(raw);
 
-		expect(data.prd).toBe("prd-042");
+		expect(data.prd).toBe(prdResult.value.id);
 	});
 
 	it("accepts custom dependencies", () => {

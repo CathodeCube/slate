@@ -128,6 +128,16 @@ export class TaskService {
 			};
 		}
 
+		// Validate PRD reference if provided
+		if (params.prd !== undefined) {
+			if (!this.store.existsPRD(params.prd)) {
+				return {
+					ok: false,
+					error: { kind: "not-found", id: params.prd },
+				};
+			}
+		}
+
 		const now = new Date().toISOString();
 
 		const task: Task = {
@@ -175,7 +185,7 @@ export class TaskService {
 		task.status = "done";
 		task.updated = new Date().toISOString();
 
-		const writeResult = this.store.createTask(task);
+		const writeResult = this.store.updateTask(task);
 		if (!writeResult.ok) {
 			return writeResult;
 		}
@@ -268,7 +278,7 @@ export class TaskService {
 
 		task.updated = new Date().toISOString();
 
-		const writeResult = this.store.createTask(task);
+		const writeResult = this.store.updateTask(task);
 		if (!writeResult.ok) {
 			return writeResult;
 		}

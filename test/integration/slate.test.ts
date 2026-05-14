@@ -88,10 +88,15 @@ describe("Slate library — integration", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
+		// Create a PRD first so the task can reference it
+		const prdResult = slate.prdCreate({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+
 		const result = slate.taskCreate({
 			title: "Dependent Task",
 			dependencies: ["task-001", "task-002"],
-			prd: "prd-001",
+			prd: prdResult.value.id,
 		});
 
 		expect(result.ok).toBe(true);
@@ -334,7 +339,7 @@ describe("Slate library — integration", () => {
 		if (!readA.ok) return;
 		readA.value.dependencies = [taskC.id];
 		readA.value.updated = new Date().toISOString();
-		store.createTask(readA.value);
+		store.updateTask(readA.value);
 
 		const result = slate.taskResolve(taskA.id);
 		expect(result.ok).toBe(false);

@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	statSync,
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
@@ -10,10 +11,42 @@ import { join } from "node:path";
 
 import matter from "gray-matter";
 import type { PRD, PRDError } from "src/prd/types";
-import type { IStore } from "src/store/IStore";
+import type { IStore, StoreInitError } from "src/store/IStore";
 import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 import zod from "zod";
+
+// ---------------------------------------------------------------------------
+// Validate store directory
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate a directory path for store initialization.
+ * Returns an error if the path does not exist, is a file, or is not writable.
+ */
+export function validateStoreDirectory(
+	path: string,
+): Result<void, StoreInitError> {
+	if (!existsSync(path)) {
+		return { ok: false, error: { kind: "not-found", path } };
+	}
+
+	const stats = statSync(path);
+	if (!stats.isDirectory()) {
+		return { ok: false, error: { kind: "is-file", path } };
+	}
+
+	// Test writability by attempting to write a temp file
+	const testFile = join(path, ".write-test");
+	try {
+		writeFileSync(testFile, "", "utf-8");
+		unlinkSync(testFile);
+	} catch {
+		return { ok: false, error: { kind: "not-writable", path } };
+	}
+
+	return { ok: true, value: undefined };
+}
 
 // ---------------------------------------------------------------------------
 // LocalFileStore
@@ -44,6 +77,12 @@ export class LocalFileStore implements IStore {
 	#dir: string;
 
 	constructor(dir: string) {
+		const validation = validateStoreDirectory(dir);
+		if (!validation.ok) {
+			throw new Error(
+				`Store directory is invalid: ${validation.error.path} (${validation.error.kind})`,
+			);
+		}
 		this.#dir = dir;
 	}
 
@@ -84,10 +123,26 @@ export class LocalFileStore implements IStore {
 
 	// -- PRD operations -------------------------------------------------------
 
+	/**
+	 * Check if a PRD file exists.
+	 */
+	existsPRD(id: string): boolean {
+		const PRDDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(PRDDir)) {
+			return false;
+		}
+		const filePath = join(PRDDir, `${id}${PRD_FILE_EXT}`);
+		return existsSync(filePath);
+	}
+
 	createPRD(prd: PRD): Result<void, PRDError> {
 		this.ensureDir();
 		const PRDDir = join(this.#dir, PRD_DIR);
 		const filePath = join(PRDDir, `${prd.id}${PRD_FILE_EXT}`);
+
+		if (existsSync(filePath)) {
+			return { ok: false, error: { kind: "already-exists", id: prd.id } };
+		}
 
 		const frontmatter = {
 			id: prd.id,
@@ -223,6 +278,28 @@ export class LocalFileStore implements IStore {
 		const taskDir = join(this.#dir, TASK_DIR);
 		const filePath = join(taskDir, `${task.id}${TASK_FILE_EXT}`);
 
+		if (existsSync(filePath)) {
+			return { ok: false, error: { kind: "already-exists", id: task.id } };
+		}
+
+		return this.writeTaskFile(filePath, task);
+	}
+
+	/**
+	 * Update an existing task file (overwrites without existence check).
+	 */
+	updateTask(task: Task): Result<void, TaskError> {
+		this.ensureTaskDir();
+		const taskDir = join(this.#dir, TASK_DIR);
+		const filePath = join(taskDir, `${task.id}${TASK_FILE_EXT}`);
+
+		return this.writeTaskFile(filePath, task);
+	}
+
+	/**
+	 * Write a task file with YAML frontmatter.
+	 */
+	private writeTaskFile(filePath: string, task: Task): Result<void, TaskError> {
 		const frontmatter = {
 			id: task.id,
 			title: task.title,

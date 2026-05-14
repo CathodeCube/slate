@@ -26,4 +26,6 @@ export type PRDError =
 	| { kind: "not-found"; id: string }
 	| { kind: "invalid-title"; message: string }
 	| { kind: "invalid-status"; status: string }
-	| { kind: "corrupted-file"; id: string; message: string };
+	| { kind: "corrupted-file"; id: string; message: string }
+	| { kind: "already-exists"; id: string }
+	| { kind: "directory-invalid"; path: string; reason: string };

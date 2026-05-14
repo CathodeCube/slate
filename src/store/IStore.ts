@@ -3,6 +3,18 @@ import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
+// Store construction error
+// ---------------------------------------------------------------------------
+
+/**
+ * Error returned when the store directory cannot be initialized.
+ */
+export type StoreInitError =
+	| { kind: "not-found"; path: string }
+	| { kind: "is-file"; path: string }
+	| { kind: "not-writable"; path: string };
+
+// ---------------------------------------------------------------------------
 // Store interface
 // ---------------------------------------------------------------------------
 
@@ -11,6 +23,11 @@ import type { Result } from "src/utils/result";
  * A single implementation (`LocalFileStore`) provides concrete file-based storage.
  */
 export interface IStore {
+	/**
+	 * Check if a PRD file exists.
+	 */
+	existsPRD(id: string): boolean;
+
 	/**
 	 * Create a PRD file in the store.
 	 */
@@ -42,6 +59,11 @@ export interface IStore {
 	 * Create a task file in the store.
 	 */
 	createTask(task: Task): Result<void, TaskError>;
+
+	/**
+	 * Update an existing task file in the store (overwrites without checking).
+	 */
+	updateTask(task: Task): Result<void, TaskError>;
 
 	/**
 	 * Read a task file from the store.
