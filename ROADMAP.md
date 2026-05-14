@@ -6,19 +6,19 @@ Core library and CLI for issue tracking.
 
 - [x] **Data model** — PRD and Task types, validation, YAML frontmatter serialization (`src/prd/types.ts`, `src/task/types.ts`, Zod schemas in `LocalFileStore.ts`)
 - [x] **Store** — single `IStore` interface with `LocalFileStore` implementation, handles both PRDs and tasks in `slate/prds/` and `slate/tasks/` (`src/store/IStore.ts`, `src/store/LocalFileStore.ts`)
-- [x] **Library API** — CRUD operations, query/filter, dependency resolution (`PRDService`, `TaskService` with full CRUD, `taskQuery` filter, `taskResolve` with unblocked detection, `Slate` facade class)
-- [x] **CLI** — `slate prd` and `slate task` subcommands (`prd list/show/create`, `task list/update/create/resolve/delete`)
+- [x] **Library API** — CRUD operations, query/filter, dependency resolution (`PRDService`, `TaskService` with full CRUD, `taskList` with filter, `taskResolve` with unblocked detection, `Slate` facade class)
+- [x] **CLI** — `slate prd` and `slate task` subcommands (`prd list/show/create`, `task list/update/create/resolve/delete`), `slate plan` (next actionable task), `slate init`, `slate overview`
 - [x] **Result type** — `Result<T, E>` for all fallible operations (`src/utils/result.ts`)
-- [x] **Tests** — integration-first, covering the library contract (`test/integration/`, `test/unit/` — 40+ tests across slate, CLI, PRD, task, store validation, and library import)
+- [x] **Tests** — integration-first, covering the library contract (`test/integration/`, `test/unit/` — 129 tests across slate, CLI, PRD, task, store validation, dependency-index, and entity-reader)
 
 ## Phase 2: Agentic Integration
 
 Make Slate useful for AI agents.
 
 - [ ] **Pi extension** — direct tool calls from Pi harness to Slate library
-- [x] **Task discovery** — `taskQuery` filter available on library; `slate plan` CLI not yet implemented
+- [x] **Task discovery** — `taskList` filter available on library; `slate plan` CLI implemented
 - [x] **Dependency-aware updates** — `taskResolve` marks task done and reports unblocked dependents; CLI `slate task resolve` implemented
-- [ ] **CLI workflows** — `slate plan` (show next actionable task) — not yet implemented
+- [x] **CLI workflows** — `slate plan` (show next actionable task) implemented
 
 ## Phase 3: Polish & Visibility
 
