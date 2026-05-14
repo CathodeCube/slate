@@ -15,10 +15,13 @@ describe("Slate library — integration", () => {
 		const slate = new Slate({ dir: storeDir });
 
 		expect(slate).toBeInstanceOf(Slate);
-		expect(slate.store).toBeInstanceOf(LocalFileStore);
-		expect(slate.store.dir).toBe(storeDir);
 		expect(slate.prds).toBeInstanceOf(PRDService);
 		expect(slate.tasks).toBeInstanceOf(TaskService);
+		// Store is private — verify services are properly wired by using them
+		const prdResult = slate.prdCreate({ title: "Test PRD" });
+		expect(prdResult.ok).toBe(true);
+		if (!prdResult.ok) return;
+		expect(prdResult.value.id).toBe("prd-001");
 	});
 
 	it("prds.create returns Result<PRD, PRDError>", () => {
@@ -179,6 +182,30 @@ describe("Slate library — integration", () => {
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
 		expect(result.error.kind).toBe("not-found");
+	});
+
+	it("taskResolve returns already-done error for an already done task", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task to resolve" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const taskId = createResult.value.id;
+
+		// First resolve — succeeds
+		const firstResult = slate.taskResolve(taskId);
+		expect(firstResult.ok).toBe(true);
+		if (!firstResult.ok) return;
+
+		// Second resolve — should return already-done
+		const secondResult = slate.taskResolve(taskId);
+		expect(secondResult.ok).toBe(false);
+		if (secondResult.ok) return;
+		expect(secondResult.error.kind).toBe("already-done");
+		if (secondResult.error.kind !== "already-done") return;
+		expect(secondResult.error.id).toBe(taskId);
 	});
 
 	it("uses discriminated error unions (PRDError, TaskError)", () => {

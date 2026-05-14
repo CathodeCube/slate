@@ -32,6 +32,7 @@ export type TaskError =
 	| { kind: "corrupted-file"; id: string; message: string }
 	| { kind: "cycle-detected"; cycle: string[] }
 	| { kind: "already-exists"; id: string }
+	| { kind: "already-done"; id: string }
 	| { kind: "directory-invalid"; path: string; reason: string };
 
 // ---------------------------------------------------------------------------

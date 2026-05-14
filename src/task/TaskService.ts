@@ -122,6 +122,11 @@ export class TaskService {
 			return { ok: false, error: readResult.error };
 		}
 
+		// Reject resolving an already-done task
+		if (readResult.value.status === "done") {
+			return { ok: false, error: { kind: "already-done", id } };
+		}
+
 		const task: Task = { ...readResult.value };
 
 		// Mark the task as done
@@ -139,12 +144,21 @@ export class TaskService {
 			return { ok: false, error: listResult.error };
 		}
 
+		// Cache isTaskDone results to avoid N+1 file reads
+		const doneCache = new Map<string, boolean>();
 		const unblocked: string[] = [];
 		for (const depTask of listResult.value) {
 			if (depTask.dependencies.includes(id)) {
-				const allDone = depTask.dependencies.every((depId) =>
-					this.isTaskDone(depId),
-				);
+				const allDone = depTask.dependencies.every((depId) => {
+					if (!doneCache.has(depId)) {
+						doneCache.set(depId, this.isTaskDone(depId));
+					}
+					const cached = doneCache.get(depId);
+					if (cached === undefined) {
+						return false;
+					}
+					return cached;
+				});
 				if (allDone) {
 					unblocked.push(depTask.id);
 				}

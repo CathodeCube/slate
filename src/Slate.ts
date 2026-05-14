@@ -29,9 +29,9 @@ export interface SlateOptions {
  */
 export class Slate {
 	/**
-	 * The underlying store implementation.
+	 * The underlying store implementation (private).
 	 */
-	readonly store: IStore;
+	readonly #store: IStore;
 
 	/**
 	 * Service for PRD operations.
@@ -44,9 +44,9 @@ export class Slate {
 	readonly tasks: TaskService;
 
 	constructor(opts: SlateOptions) {
-		this.store = new LocalFileStore(opts.dir);
-		this.prds = new PRDService(this.store);
-		this.tasks = new TaskService(this.store);
+		this.#store = new LocalFileStore(opts.dir);
+		this.prds = new PRDService(this.#store);
+		this.tasks = new TaskService(this.#store);
 	}
 
 	/**
@@ -77,7 +77,7 @@ export class Slate {
 	 * Query tasks with a filter function.
 	 */
 	taskQuery(filter: TaskQueryFilter): Result<Task[], TaskError> {
-		const listResult = this.store.listTasks();
+		const listResult = this.#store.listTasks();
 		if (!listResult.ok) {
 			return listResult;
 		}
