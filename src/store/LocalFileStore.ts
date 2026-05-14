@@ -10,9 +10,11 @@ import {
 import { join } from "node:path";
 
 import matter from "gray-matter";
-import type { PRD, PRDError } from "src/prd/types";
+import type { PRD, PRDError, PRDStatus, Priority } from "src/prd/types";
 import type { IStore, StoreInitError } from "src/store/IStore";
-import type { Task, TaskError } from "src/task/types";
+import type { Task, TaskError, TaskStatus } from "src/task/types";
+import { readEntity } from "src/utils/entity";
+import { nextSequentialID } from "src/utils/id";
 import type { Result } from "src/utils/result";
 import zod from "zod";
 
@@ -70,6 +72,20 @@ const frontmatterSchema = zod.object({
 });
 
 /**
+ * Zod schema for Task YAML frontmatter.
+ */
+const taskFrontmatterSchema = zod.object({
+	id: zod.string(),
+	title: zod.string(),
+	status: zod.enum(["todo", "in-progress", "done", "blocked"]),
+	priority: zod.enum(["high", "medium", "low"]),
+	dependencies: zod.array(zod.string()),
+	prd: zod.string().optional(),
+	created: zod.string(),
+	updated: zod.string(),
+});
+
+/**
  * File-based store implementation that reads and writes PRDs and tasks as
  * Markdown files with YAML frontmatter.
  */
@@ -94,9 +110,9 @@ export class LocalFileStore implements IStore {
 	 * Ensure the store directory and PRD subdirectory exist.
 	 */
 	private ensureDir(): void {
-		const PRDDir = join(this.#dir, PRD_DIR);
-		if (!existsSync(PRDDir)) {
-			mkdirSync(PRDDir, { recursive: true });
+		const prdDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(prdDir)) {
+			mkdirSync(prdDir, { recursive: true });
 		}
 	}
 
@@ -105,20 +121,8 @@ export class LocalFileStore implements IStore {
 	 */
 	nextPRDID(): string {
 		this.ensureDir();
-		const PRDDir = join(this.#dir, PRD_DIR);
-		const files = readdirSync(PRDDir).filter((f) => f.endsWith(PRD_FILE_EXT));
-		let maxNum = 0;
-		for (const file of files) {
-			const match = file.match(/^prd-(\d+)/);
-			if (match) {
-				const num = parseInt(match[1], 10);
-				if (num > maxNum) {
-					maxNum = num;
-				}
-			}
-		}
-		const nextNum = maxNum + 1;
-		return `prd-${String(nextNum).padStart(3, "0")}`;
+		const prdDir = join(this.#dir, PRD_DIR);
+		return nextSequentialID(prdDir, "prd", PRD_FILE_EXT);
 	}
 
 	// -- PRD operations -------------------------------------------------------
@@ -127,18 +131,18 @@ export class LocalFileStore implements IStore {
 	 * Check if a PRD file exists.
 	 */
 	existsPRD(id: string): boolean {
-		const PRDDir = join(this.#dir, PRD_DIR);
-		if (!existsSync(PRDDir)) {
+		const prdDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(prdDir)) {
 			return false;
 		}
-		const filePath = join(PRDDir, `${id}${PRD_FILE_EXT}`);
+		const filePath = join(prdDir, `${id}${PRD_FILE_EXT}`);
 		return existsSync(filePath);
 	}
 
 	createPRD(prd: PRD): Result<void, PRDError> {
 		this.ensureDir();
-		const PRDDir = join(this.#dir, PRD_DIR);
-		const filePath = join(PRDDir, `${prd.id}${PRD_FILE_EXT}`);
+		const prdDir = join(this.#dir, PRD_DIR);
+		const filePath = join(prdDir, `${prd.id}${PRD_FILE_EXT}`);
 
 		if (existsSync(filePath)) {
 			return { ok: false, error: { kind: "already-exists", id: prd.id } };
@@ -159,55 +163,51 @@ export class LocalFileStore implements IStore {
 	}
 
 	readPRD(id: string): Result<PRD, PRDError> {
-		const PRDDir = join(this.#dir, PRD_DIR);
-		if (!existsSync(PRDDir)) {
+		const prdDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(prdDir)) {
 			return { ok: false, error: { kind: "not-found", id } };
 		}
 
-		const filePath = join(PRDDir, `${id}${PRD_FILE_EXT}`);
-		if (!existsSync(filePath)) {
-			return { ok: false, error: { kind: "not-found", id } };
+		const result = readEntity(
+			prdDir,
+			id,
+			PRD_FILE_EXT,
+			frontmatterSchema,
+			(data: {
+				id: string;
+				title: string;
+				status: string;
+				priority: string;
+				created: string;
+				updated: string;
+			}) => ({
+				id: data.id,
+				title: data.title,
+				status: data.status as PRDStatus,
+				priority: data.priority as Priority,
+				created: data.created,
+				updated: data.updated,
+			}),
+		);
+
+		if (!result.ok) {
+			return { ok: false, error: result.error as PRDError };
 		}
 
-		const raw = readFileSync(filePath, "utf-8");
-		const { data } = matter(raw);
-
-		const parsed = frontmatterSchema.safeParse(data);
-		if (!parsed.success) {
-			return {
-				ok: false,
-				error: {
-					kind: "corrupted-file",
-					id,
-					message: parsed.error.message,
-				},
-			};
-		}
-
-		return {
-			ok: true,
-			value: {
-				id: parsed.data.id,
-				title: parsed.data.title,
-				status: parsed.data.status,
-				priority: parsed.data.priority,
-				created: parsed.data.created,
-				updated: parsed.data.updated,
-			},
-		};
+		return result;
 	}
 
 	listPRDs(): Result<PRD[], PRDError> {
-		const PRDDir = join(this.#dir, PRD_DIR);
-		if (!existsSync(PRDDir)) {
+		const prdDir = join(this.#dir, PRD_DIR);
+		if (!existsSync(prdDir)) {
 			return { ok: true, value: [] };
 		}
 
-		const files = readdirSync(PRDDir).filter((f) => f.endsWith(PRD_FILE_EXT));
+		const files = readdirSync(prdDir).filter((f) => f.endsWith(PRD_FILE_EXT));
 		const prds: PRD[] = [];
 
 		for (const file of files) {
-			const filePath = join(PRDDir, file);
+			const filePath = join(prdDir, file);
 			const raw = readFileSync(filePath, "utf-8");
 			const { data } = matter(raw);
 
@@ -258,19 +258,7 @@ export class LocalFileStore implements IStore {
 	nextTaskID(): string {
 		this.ensureTaskDir();
 		const taskDir = join(this.#dir, TASK_DIR);
-		const files = readdirSync(taskDir).filter((f) => f.endsWith(TASK_FILE_EXT));
-		let maxNum = 0;
-		for (const file of files) {
-			const match = file.match(/^(task)-(\d+)/);
-			if (match) {
-				const num = parseInt(match[2], 10);
-				if (num > maxNum) {
-					maxNum = num;
-				}
-			}
-		}
-		const nextNum = maxNum + 1;
-		return `task-${String(nextNum).padStart(3, "0")}`;
+		return nextSequentialID(taskDir, "task", TASK_FILE_EXT);
 	}
 
 	createTask(task: Task): Result<void, TaskError> {
@@ -322,39 +310,37 @@ export class LocalFileStore implements IStore {
 			return { ok: false, error: { kind: "not-found", id } };
 		}
 
-		const filePath = join(taskDir, `${id}${TASK_FILE_EXT}`);
-		if (!existsSync(filePath)) {
-			return { ok: false, error: { kind: "not-found", id } };
+		const result = readEntity(
+			taskDir,
+			id,
+			TASK_FILE_EXT,
+			taskFrontmatterSchema,
+			(data: {
+				id: string;
+				title: string;
+				status: string;
+				priority: string;
+				dependencies: string[];
+				prd?: string;
+				created: string;
+				updated: string;
+			}) => ({
+				id: data.id,
+				title: data.title,
+				status: data.status as TaskStatus,
+				priority: data.priority as Priority,
+				dependencies: data.dependencies,
+				prd: data.prd,
+				created: data.created,
+				updated: data.updated,
+			}),
+		);
+
+		if (!result.ok) {
+			return { ok: false, error: result.error as TaskError };
 		}
 
-		const raw = readFileSync(filePath, "utf-8");
-		const { data } = matter(raw);
-
-		const parsed = taskFrontmatterSchema.safeParse(data);
-		if (!parsed.success) {
-			return {
-				ok: false,
-				error: {
-					kind: "corrupted-file",
-					id,
-					message: parsed.error.message,
-				},
-			};
-		}
-
-		return {
-			ok: true,
-			value: {
-				id: parsed.data.id,
-				title: parsed.data.title,
-				status: parsed.data.status,
-				priority: parsed.data.priority,
-				dependencies: parsed.data.dependencies,
-				prd: parsed.data.prd,
-				created: parsed.data.created,
-				updated: parsed.data.updated,
-			},
-		};
+		return result;
 	}
 
 	listTasks(): Result<Task[], TaskError> {
@@ -393,18 +379,3 @@ export class LocalFileStore implements IStore {
 		return { ok: true, value: tasks };
 	}
 }
-
-// ---------------------------------------------------------------------------
-// Task frontmatter schema
-// ---------------------------------------------------------------------------
-
-const taskFrontmatterSchema = zod.object({
-	id: zod.string(),
-	title: zod.string(),
-	status: zod.enum(["todo", "in-progress", "done", "blocked"]),
-	priority: zod.enum(["high", "medium", "low"]),
-	dependencies: zod.array(zod.string()),
-	prd: zod.string().optional(),
-	created: zod.string(),
-	updated: zod.string(),
-});

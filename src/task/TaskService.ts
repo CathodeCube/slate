@@ -1,6 +1,7 @@
 import type { PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import type { Task, TaskError } from "src/task/types";
+import { detectCycle } from "src/utils/detect-cycle";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
@@ -16,53 +17,6 @@ export interface ResolveResult {
 	 * IDs of tasks that were previously blocked and are now unblocked.
 	 */
 	unblocked: string[];
-}
-
-// ---------------------------------------------------------------------------
-// Cycle detection helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Detect a dependency cycle starting from `taskId` using DFS.
- * Returns the cycle path if one exists, or null if no cycle.
- */
-function detectCycle(
-	taskId: string,
-	getTask: (id: string) => Task | null,
-): string[] | null {
-	const visited = new Set<string>();
-	const path: string[] = [];
-
-	function dfs(id: string): string[] | null {
-		if (visited.has(id)) {
-			// Found a cycle — extract the cycle from path
-			const cycleStart = path.indexOf(id);
-			if (cycleStart !== -1) {
-				return path.slice(cycleStart).concat(id);
-			}
-			return null;
-		}
-
-		const task = getTask(id);
-		if (!task) {
-			return null;
-		}
-
-		visited.add(id);
-		path.push(id);
-
-		for (const dep of task.dependencies) {
-			const cycle = dfs(dep);
-			if (cycle) {
-				return cycle;
-			}
-		}
-
-		path.pop();
-		return null;
-	}
-
-	return dfs(taskId);
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +129,7 @@ export class TaskService {
 		const cycle = detectCycle(id, (depId) => {
 			const depResult = this.store.readTask(depId);
 			if (!depResult.ok) return null;
-			return depResult.value;
+			return { dependencies: depResult.value.dependencies };
 		});
 		if (cycle) {
 			return { ok: false, error: { kind: "cycle-detected", cycle } };
