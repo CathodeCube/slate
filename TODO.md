@@ -36,7 +36,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 
 - **No PRD update operation.** You can create and read PRDs, but never update their status, priority, or title. Tasks support `update` — PRDs don't.
 - **No task title update.** `taskUpdate` only accepts `status` and `priority`. Renaming a task requires delete + recreate.
-- **`--dir` option is inconsistent across commands.** The `overview.md` and `AGENTS.md` documentation shows `[--dir <path>]` on all commands, but only `plan` actually accepts it. `prd create/list/show`, `task create/list/update/resolve/delete`, and `init` do not accept `--dir`. This means you can only operate on the default `./slate` directory from CWD.
+- ~~**`--dir` option is inconsistent across commands.** The `overview.md` and `AGENTS.md` documentation shows `[--dir <path>]` on all commands, but only `plan` actually accepts it. `prd create/list/show`, `task create/list/update/resolve/delete`, and `init` do not accept `--dir`. This means you can only operate on the default `./slate` directory from CWD.~~ **Resolved:** Removed `--dir` from all CLI commands. All commands now use the hardcoded `./slate` directory (passed as `defaultDir` parameter), matching the pattern already used by `plan` and `init`. Tests updated to use CWD-based invocation.
 
 ### 3. Documentation Gaps (Medium)
 
@@ -69,7 +69,7 @@ The project is **not yet ready for a proper first release**, but the foundation 
 | 1c | 🔴 Packaging | Add `engines.bun` field ✅ | **Blocking** | **Done** |
 | 2 | 🔴 Packaging | Add `license` field and LICENSE file ✅ | **Blocking** | **Done** |
 | 3 | 🟡 Feature | Implement `prdUpdate` (PRD status/priority/title update) | **High** | |
-| 4 | 🟡 Feature | Add `--dir` option to all CLI commands (or document why it's absent) ✅ | **High** | **Done** |
+| 4 | 🟢 Feature | Remove `--dir` from all CLI commands; use hardcoded `./slate` dir ✅ | **High** | **Done** |
 | 5 | 🟡 Feature | Add task title update support to `taskUpdate` | **Medium** | |
 | 6 | 🟡 Docs | Add installation instructions to README | **High** | |
 | 7 | 🟡 Docs | Update ROADMAP to reflect actual state | **Medium** | |
