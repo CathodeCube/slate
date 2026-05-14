@@ -10,7 +10,7 @@
 		}
 	},
 	"scripts": {
-		"start": "bun run src/index.ts",
+		"start": "bun run src/cli/run.ts",
 		"build": "bun build src/index.ts --outdir dist",
 		"typecheck": "tsc --noEmit",
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",

@@ -1,15 +1,6 @@
 /**
  * Slate — library entry point.
  *
- * When imported as a module, this exposes the `Slate` class for programmatic
- * access. When run via `bun run start` or the `slate` binary, it initializes
- * the Commander CLI and delegates to the command handlers.
+ * Exports the `Slate` class for programmatic access. No side effects.
  */
 export { Slate, type SlateOptions } from "src/Slate";
-
-// CLI entry point (only executes when run directly, not when imported)
-import { main } from "src/cli";
-
-if (process.argv[1]?.endsWith("src/index.ts")) {
-	main();
-}

@@ -23,7 +23,7 @@ function runSlate(
 	const cwd = opts?.cwd ?? process.cwd();
 	// Escape each argument to handle spaces and special characters
 	const escapedArgs = args.map((a) => (a.includes(" ") ? `"${a}"` : a));
-	const cmd = `bun run src/index.ts ${escapedArgs.join(" ")}`;
+	const cmd = `bun run src/cli/run.ts ${escapedArgs.join(" ")}`;
 	try {
 		const stdout = execSync(cmd, {
 			cwd,
