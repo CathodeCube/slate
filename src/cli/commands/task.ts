@@ -9,8 +9,7 @@ import { join } from "node:path";
 
 import { Command } from "commander";
 import { readStdin } from "src/cli/stdin";
-import { LocalFileStore } from "src/store/LocalFileStore";
-import { TaskService } from "src/task/TaskService";
+import { createSlate } from "src/Slate/factory";
 
 // ---------------------------------------------------------------------------
 // task list
@@ -34,9 +33,8 @@ export function taskListCmd(defaultDir: string): Command {
 	);
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts: { status?: string; dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new TaskService(store);
-		const listResult = service.list();
+		const slate = createSlate(opts.dir);
+		const listResult = slate.taskList();
 
 		if (!listResult.ok) {
 			process.stderr.write(
@@ -100,9 +98,7 @@ export function taskUpdateCmd(defaultDir: string): Command {
 			id: string,
 			opts: { status?: string; priority?: string; dir: string },
 		) => {
-			const store = new LocalFileStore(opts.dir);
-			const service = new TaskService(store);
-
+			const slate = createSlate(opts.dir);
 			const updates: {
 				status?: "todo" | "in-progress" | "done" | "blocked";
 				priority?: "high" | "medium" | "low";
@@ -126,34 +122,39 @@ export function taskUpdateCmd(defaultDir: string): Command {
 				process.exit(1);
 			}
 
-			const result = service.update(id, updates);
+			const result = slate.taskUpdate(id, updates);
 
 			if (!result.ok) {
 				switch (result.error.kind) {
-					case "not-found":
+					case "task-not-found":
 						process.stderr.write(`Error: Task ${result.error.id} not found\n`);
 						break;
-					case "invalid-status":
+					case "task-invalid-status":
 						process.stderr.write(
 							`Error: Invalid status ${result.error.status}\n`,
 						);
 						break;
-					case "invalid-priority":
+					case "task-invalid-priority":
 						process.stderr.write(
 							`Error: Invalid priority ${result.error.priority}\n`,
 						);
 						break;
-					case "corrupted-file":
+					case "task-corrupted-file":
 						process.stderr.write(
 							`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 						);
 						break;
-					case "already-exists":
+					case "task-already-exists":
 						process.stderr.write(
 							`Error: Task ${result.error.id} already exists\n`,
 						);
 						break;
-					case "directory-invalid":
+					case "task-already-done":
+						process.stderr.write(
+							`Error: Task ${result.error.id} is already done\n`,
+						);
+						break;
+					case "task-directory-invalid":
 						process.stderr.write(
 							`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
 						);
@@ -204,12 +205,11 @@ export function taskCreateCmd(defaultDir: string): Command {
 	);
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new TaskService(store);
+		const slate = createSlate(opts.dir);
 
 		const stdinBody = await readStdin();
 
-		const result = service.create({
+		const result = slate.taskCreate({
 			title: opts.title,
 			priority: opts.priority as "high" | "medium" | "low",
 			status: opts.status as "todo" | "in-progress" | "done" | "blocked",
@@ -218,33 +218,33 @@ export function taskCreateCmd(defaultDir: string): Command {
 
 		if (!result.ok) {
 			switch (result.error.kind) {
-				case "invalid-title":
+				case "task-invalid-title":
 					process.stderr.write(`Error: ${result.error.message}\n`);
 					break;
-				case "invalid-status":
+				case "task-invalid-status":
 					process.stderr.write(
 						`Error: Invalid status ${result.error.status}\n`,
 					);
 					break;
-				case "invalid-priority":
+				case "task-invalid-priority":
 					process.stderr.write(
 						`Error: Invalid priority ${result.error.priority}\n`,
 					);
 					break;
-				case "not-found":
+				case "task-not-found":
 					process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
 					break;
-				case "corrupted-file":
+				case "task-corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
 					break;
-				case "already-exists":
+				case "task-already-exists":
 					process.stderr.write(
 						`Error: Task ${result.error.id} already exists\n`,
 					);
 					break;
-				case "directory-invalid":
+				case "task-directory-invalid":
 					process.stderr.write(
 						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
 					);
@@ -290,32 +290,31 @@ export function taskResolveCmd(defaultDir: string): Command {
 	cmd.argument("<id>", "Task ID");
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (id: string, opts: { dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new TaskService(store);
+		const slate = createSlate(opts.dir);
 
-		const result = service.resolve(id);
+		const result = slate.taskResolve(id);
 
 		if (!result.ok) {
 			switch (result.error.kind) {
-				case "not-found":
+				case "task-not-found":
 					process.stderr.write(`Error: Task ${result.error.id} not found\n`);
 					break;
-				case "cycle-detected":
+				case "task-already-done":
 					process.stderr.write(
-						`Error: Dependency cycle detected: ${result.error.cycle.join(" -> ")}\n`,
+						`Error: Task ${result.error.id} is already done\n`,
 					);
 					break;
-				case "corrupted-file":
+				case "task-corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
 					break;
-				case "already-exists":
+				case "task-already-exists":
 					process.stderr.write(
 						`Error: Task ${result.error.id} already exists\n`,
 					);
 					break;
-				case "directory-invalid":
+				case "task-directory-invalid":
 					process.stderr.write(
 						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
 					);
@@ -356,27 +355,26 @@ export function taskDeleteCmd(defaultDir: string): Command {
 	cmd.argument("<id>", "Task ID");
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (id: string, opts: { dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new TaskService(store);
+		const slate = createSlate(opts.dir);
 
-		const result = service.delete(id);
+		const result = slate.taskDelete(id);
 
 		if (!result.ok) {
 			switch (result.error.kind) {
-				case "not-found":
+				case "task-not-found":
 					process.stderr.write(`Error: Task ${result.error.id} not found\n`);
 					break;
-				case "corrupted-file":
+				case "task-corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
 					break;
-				case "already-exists":
+				case "task-already-exists":
 					process.stderr.write(
 						`Error: Task ${result.error.id} already exists\n`,
 					);
 					break;
-				case "directory-invalid":
+				case "task-directory-invalid":
 					process.stderr.write(
 						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
 					);

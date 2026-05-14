@@ -4,8 +4,7 @@
  * Exports: `prdListCmd`, `prdShowCmd`, `prdCreateCmd`.
  */
 import { Command } from "commander";
-import { PRDService } from "src/prd/PRDService";
-import { LocalFileStore } from "src/store/LocalFileStore";
+import { createSlate } from "src/Slate/factory";
 
 // ---------------------------------------------------------------------------
 // prd list
@@ -25,9 +24,8 @@ export function prdListCmd(defaultDir: string): Command {
 	cmd.description("List PRDs");
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts: { dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new PRDService(store);
-		const listResult = service.list();
+		const slate = createSlate(opts.dir);
+		const listResult = slate.prdList();
 
 		if (!listResult.ok) {
 			process.stderr.write(
@@ -71,16 +69,15 @@ export function prdShowCmd(defaultDir: string): Command {
 	cmd.argument("<id>", "PRD ID");
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (id: string, opts: { dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new PRDService(store);
-		const result = service.read(id);
+		const slate = createSlate(opts.dir);
+		const result = slate.prdRead(id);
 
 		if (!result.ok) {
 			switch (result.error.kind) {
-				case "not-found":
+				case "prd-not-found":
 					process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
 					break;
-				case "corrupted-file":
+				case "prd-corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
@@ -134,10 +131,9 @@ export function prdCreateCmd(defaultDir: string): Command {
 	);
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new PRDService(store);
+		const slate = createSlate(opts.dir);
 
-		const result = service.create({
+		const result = slate.prdCreate({
 			title: opts.title,
 			priority: opts.priority as "high" | "medium" | "low",
 			status: opts.status as "todo" | "in-progress" | "done" | "blocked",
@@ -145,28 +141,25 @@ export function prdCreateCmd(defaultDir: string): Command {
 
 		if (!result.ok) {
 			switch (result.error.kind) {
-				case "invalid-title":
+				case "prd-invalid-title":
 					process.stderr.write(`Error: ${result.error.message}\n`);
 					break;
-				case "not-found":
-					process.stderr.write(`Error: PRD ${result.error.id} not found\n`);
-					break;
-				case "invalid-status":
+				case "prd-invalid-status":
 					process.stderr.write(
 						`Error: Invalid status ${result.error.status}\n`,
 					);
 					break;
-				case "corrupted-file":
+				case "prd-corrupted-file":
 					process.stderr.write(
 						`Error: Corrupted file ${result.error.id}: ${result.error.message}\n`,
 					);
 					break;
-				case "already-exists":
+				case "prd-already-exists":
 					process.stderr.write(
 						`Error: PRD ${result.error.id} already exists\n`,
 					);
 					break;
-				case "directory-invalid":
+				case "prd-directory-invalid":
 					process.stderr.write(
 						`Error: Invalid directory ${result.error.path}: ${result.error.reason}\n`,
 					);

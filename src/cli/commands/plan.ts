@@ -6,8 +6,7 @@
  * → low) then by creation date.
  */
 import { Command } from "commander";
-import { LocalFileStore } from "src/store/LocalFileStore";
-import { TaskService } from "src/task/TaskService";
+import { createSlate } from "src/Slate/factory";
 
 // ---------------------------------------------------------------------------
 // Priority ordering
@@ -56,10 +55,9 @@ export function planCmd(defaultDir: string): Command {
 	cmd.description("Show the next actionable task");
 	cmd.option("--dir <dir>", "Store directory", defaultDir);
 	cmd.action(async (opts: { dir: string }) => {
-		const store = new LocalFileStore(opts.dir);
-		const service = new TaskService(store);
+		const slate = createSlate(opts.dir);
 
-		const listResult = service.list();
+		const listResult = slate.taskList();
 
 		if (!listResult.ok) {
 			process.stderr.write(
@@ -79,7 +77,7 @@ export function planCmd(defaultDir: string): Command {
 		const doneCache = new Map<string, boolean>();
 		const isTaskDone = (id: string): boolean => {
 			if (!doneCache.has(id)) {
-				const readResult = store.readTask(id);
+				const readResult = slate.taskRead(id);
 				doneCache.set(id, readResult.ok && readResult.value.status === "done");
 			}
 			return doneCache.get(id) ?? false;

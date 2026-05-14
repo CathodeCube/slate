@@ -1,7 +1,7 @@
 ---
 id: task-001
 title: 'Deepen the Slate facade — narrow interface, hide service/store wiring'
-status: todo
+status: done
 priority: high
 dependencies: []
 prd: prd-001

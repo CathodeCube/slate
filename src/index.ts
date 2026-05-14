@@ -1,6 +1,13 @@
 /**
  * Slate — library entry point.
  *
- * Exports the `Slate` class for programmatic access. No side effects.
+ * Exports the `ISlate` interface and `Slate` implementation for programmatic
+ * access. No side effects.
  */
-export { Slate, type SlateOptions } from "src/Slate";
+export {
+	type ISlate,
+	type ResolveResult,
+	Slate,
+	SlateError,
+	type SlateOptions,
+} from "src/Slate";

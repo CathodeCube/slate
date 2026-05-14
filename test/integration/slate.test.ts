@@ -3,28 +3,21 @@ import { join } from "node:path";
 
 import matter from "gray-matter";
 
-import { PRDService } from "src/prd/PRDService";
 import { Slate } from "src/Slate";
-import { LocalFileStore } from "src/store/LocalFileStore";
-import { TaskService } from "src/task/TaskService";
 import { assertOk, createTestDir } from "../utils";
 
 describe("Slate library — integration", () => {
-	it("instantiates and configures the store", () => {
+	it("instantiates and implements ISlate", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
 		expect(slate).toBeInstanceOf(Slate);
-		expect(slate.prds).toBeInstanceOf(PRDService);
-		expect(slate.tasks).toBeInstanceOf(TaskService);
-		// Store is private — verify services are properly wired by using them
+		// Verify the facade works via ISlate methods
 		const prdResult = slate.prdCreate({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
-		if (!prdResult.ok) return;
-		expect(prdResult.value.id).toBe("prd-001");
 	});
 
-	it("prds.create returns Result<PRD, PRDError>", () => {
+	it("prdCreate returns Result<PRD, SlateError>", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -40,7 +33,7 @@ describe("Slate library — integration", () => {
 		expect(prd.updated).toBeDefined();
 	});
 
-	it("prds.create rejects empty title", () => {
+	it("prdCreate rejects empty title", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -48,10 +41,10 @@ describe("Slate library — integration", () => {
 
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(result.error.kind).toBe("invalid-title");
+		expect(result.error.kind).toBe("prd-invalid-title");
 	});
 
-	it("prds.create accepts custom priority and status", () => {
+	it("prdCreate accepts custom priority and status", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -67,7 +60,45 @@ describe("Slate library — integration", () => {
 		expect(prd.status).toBe("in-progress");
 	});
 
-	it("tasks.create returns Result<Task, TaskError>", () => {
+	it("prdRead returns a PRD by ID", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.prdCreate({ title: "Test PRD" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const readResult = slate.prdRead(createResult.value.id);
+		expect(readResult.ok).toBe(true);
+		if (!readResult.ok) return;
+		expect(readResult.value.title).toBe("Test PRD");
+	});
+
+	it("prdRead returns not-found for non-existent PRD", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const result = slate.prdRead("prd-999");
+
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error.kind).toBe("prd-not-found");
+	});
+
+	it("prdList returns all PRDs", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		slate.prdCreate({ title: "PRD A" });
+		slate.prdCreate({ title: "PRD B" });
+
+		const result = slate.prdList();
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value.length).toBe(2);
+	});
+
+	it("taskCreate returns Result<Task, SlateError>", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -87,7 +118,7 @@ describe("Slate library — integration", () => {
 		expect(task.updated).toBeDefined();
 	});
 
-	it("tasks.create accepts dependencies and prd reference", () => {
+	it("taskCreate accepts dependencies and prd reference", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -108,7 +139,7 @@ describe("Slate library — integration", () => {
 		expect(task.prd).toBe("prd-001");
 	});
 
-	it("tasks.create rejects empty title", () => {
+	it("taskCreate rejects empty title", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -116,10 +147,10 @@ describe("Slate library — integration", () => {
 
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(result.error.kind).toBe("invalid-title");
+		expect(result.error.kind).toBe("task-invalid-title");
 	});
 
-	it("taskQuery filters tasks correctly", () => {
+	it("taskList filters tasks correctly", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -127,28 +158,53 @@ describe("Slate library — integration", () => {
 		slate.taskCreate({ title: "Task B" });
 		slate.taskCreate({ title: "Task C", status: "in-progress" });
 
-		const allResult = slate.taskQuery(() => true);
+		const allResult = slate.taskList(() => true);
 		expect(allResult.ok).toBe(true);
 		if (!allResult.ok) return;
 		expect(allResult.value.length).toBe(3);
 
-		const filteredResult = slate.taskQuery((t) => t.status === "in-progress");
+		const filteredResult = slate.taskList((t) => t.status === "in-progress");
 		expect(filteredResult.ok).toBe(true);
 		if (!filteredResult.ok) return;
 		expect(filteredResult.value.length).toBe(1);
 		expect(filteredResult.value[0].title).toBe("Task C");
 	});
 
-	it("taskQuery returns empty array when no tasks match", () => {
+	it("taskList returns empty array when no tasks match", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
 		slate.taskCreate({ title: "Task A" });
 
-		const result = slate.taskQuery((t) => t.title === "Nonexistent");
+		const result = slate.taskList((t) => t.title === "Nonexistent");
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 		expect(result.value.length).toBe(0);
+	});
+
+	it("taskRead returns a task by ID", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Test Task" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const readResult = slate.taskRead(createResult.value.id);
+		expect(readResult.ok).toBe(true);
+		if (!readResult.ok) return;
+		expect(readResult.value.title).toBe("Test Task");
+	});
+
+	it("taskRead returns not-found for non-existent task", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const result = slate.taskRead("task-999");
+
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error.kind).toBe("task-not-found");
 	});
 
 	it("taskResolve marks a task as done", () => {
@@ -166,7 +222,7 @@ describe("Slate library — integration", () => {
 		if (!resolveResult.ok) return;
 
 		// Verify the task is now done
-		const queryResult = slate.taskQuery((t) => t.id === taskId);
+		const queryResult = slate.taskList((t) => t.id === taskId);
 		expect(queryResult.ok).toBe(true);
 		if (!queryResult.ok) return;
 		expect(queryResult.value.length).toBe(1);
@@ -181,7 +237,7 @@ describe("Slate library — integration", () => {
 
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(result.error.kind).toBe("not-found");
+		expect(result.error.kind).toBe("task-not-found");
 	});
 
 	it("taskResolve returns already-done error for an already done task", () => {
@@ -203,26 +259,83 @@ describe("Slate library — integration", () => {
 		const secondResult = slate.taskResolve(taskId);
 		expect(secondResult.ok).toBe(false);
 		if (secondResult.ok) return;
-		expect(secondResult.error.kind).toBe("already-done");
-		if (secondResult.error.kind !== "already-done") return;
+		expect(secondResult.error.kind).toBe("task-already-done");
+		if (secondResult.error.kind !== "task-already-done") return;
 		expect(secondResult.error.id).toBe(taskId);
 	});
 
-	it("uses discriminated error unions (PRDError, TaskError)", () => {
+	it("taskUpdate updates status and priority", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
-		// PRDError kind
+		const createResult = slate.taskCreate({ title: "Task to update" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const updateResult = slate.taskUpdate(createResult.value.id, {
+			status: "in-progress",
+			priority: "high",
+		});
+		expect(updateResult.ok).toBe(true);
+
+		const readResult = slate.taskRead(createResult.value.id);
+		expect(readResult.ok).toBe(true);
+		if (!readResult.ok) return;
+		expect(readResult.value.status).toBe("in-progress");
+		expect(readResult.value.priority).toBe("high");
+	});
+
+	it("taskUpdate rejects invalid status", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const updateResult = slate.taskUpdate(createResult.value.id, {
+			status: "invalid",
+		} as unknown as {
+			status?: "todo" | "in-progress" | "done" | "blocked";
+			priority?: "high" | "medium" | "low";
+		});
+		expect(updateResult.ok).toBe(false);
+		if (updateResult.ok) return;
+		expect(updateResult.error.kind).toBe("task-invalid-status");
+	});
+
+	it("taskDelete deletes a task", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		const createResult = slate.taskCreate({ title: "Task to delete" });
+		expect(createResult.ok).toBe(true);
+		if (!createResult.ok) return;
+
+		const deleteResult = slate.taskDelete(createResult.value.id);
+		expect(deleteResult.ok).toBe(true);
+
+		const readResult = slate.taskRead(createResult.value.id);
+		expect(readResult.ok).toBe(false);
+		if (readResult.ok) return;
+		expect(readResult.error.kind).toBe("task-not-found");
+	});
+
+	it("uses discriminated SlateError union", () => {
+		const storeDir = createTestDir();
+		const slate = new Slate({ dir: storeDir });
+
+		// PRD error
 		const prdError = slate.prdCreate({ title: "  " });
 		expect(prdError.ok).toBe(false);
 		if (prdError.ok) return;
-		expect(prdError.error.kind).toBe("invalid-title");
+		expect(prdError.error.kind).toBe("prd-invalid-title");
 
-		// TaskError kind
+		// Task error
 		const taskError = slate.taskCreate({ title: "  " });
 		expect(taskError.ok).toBe(false);
 		if (taskError.ok) return;
-		expect(taskError.error.kind).toBe("invalid-title");
+		expect(taskError.error.kind).toBe("task-invalid-title");
 	});
 
 	it("generates sequential IDs across PRD and task operations", () => {
@@ -284,7 +397,7 @@ describe("Slate library — integration", () => {
 		if (!resolveResult.ok) return;
 
 		// Verify the task is now done
-		const queryResult = slate.taskQuery((t) => t.id === taskId);
+		const queryResult = slate.taskList((t) => t.id === taskId);
 		expect(queryResult.ok).toBe(true);
 		if (!queryResult.ok) return;
 		expect(queryResult.value.length).toBe(1);
@@ -348,7 +461,7 @@ describe("Slate library — integration", () => {
 		expect(resolveResult.value.unblocked).toEqual([]);
 	});
 
-	it("taskResolve succeeds even when a cycle exists in the data", () => {
+	it("taskResolve succeeds even when a cycle exists in the data", async () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
@@ -361,6 +474,7 @@ describe("Slate library — integration", () => {
 			slate.taskCreate({ title: "Task C", dependencies: [taskB.id] }),
 		);
 		// Create a cycle by making task A depend on task C using the store directly
+		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const readA = store.readTask(taskA.id);
 		if (!readA.ok) return;
@@ -392,7 +506,7 @@ describe("Slate library — integration", () => {
 
 		// Verify child is done but no tasks were unblocked
 		expect(resolveResult.value.unblocked).toEqual([]);
-		const queryResult = slate.taskQuery((t) => t.id === child.id);
+		const queryResult = slate.taskList((t) => t.id === child.id);
 		expect(queryResult.ok).toBe(true);
 		if (!queryResult.ok) return;
 		expect(queryResult.value[0].status).toBe("done");
@@ -447,12 +561,10 @@ describe("Slate library — integration", () => {
 		);
 
 		// 3. Query tasks
-		const allTasks = assertOk(slate.taskQuery(() => true));
+		const allTasks = assertOk(slate.taskList(() => true));
 		expect(allTasks.length).toBe(3);
 
-		const highPriority = assertOk(
-			slate.taskQuery((t) => t.priority === "high"),
-		);
+		const highPriority = assertOk(slate.taskList((t) => t.priority === "high"));
 		expect(highPriority.length).toBe(1);
 		expect(highPriority[0].id).toBe(task1.id);
 
@@ -463,7 +575,7 @@ describe("Slate library — integration", () => {
 		});
 		expect(updateResult.ok).toBe(true);
 
-		const updatedTask = assertOk(slate.taskQuery((t) => t.id === task1.id));
+		const updatedTask = assertOk(slate.taskList((t) => t.id === task1.id));
 		expect(updatedTask[0].status).toBe("in-progress");
 		expect(updatedTask[0].priority).toBe("low");
 
@@ -474,7 +586,7 @@ describe("Slate library — integration", () => {
 		expect(resolveResult.value.unblocked).toContain(task2.id);
 
 		// Verify task 1 is done
-		const resolvedTask = assertOk(slate.taskQuery((t) => t.id === task1.id));
+		const resolvedTask = assertOk(slate.taskList((t) => t.id === task1.id));
 		expect(resolvedTask[0].status).toBe("done");
 
 		// 6. Ad-hoc task (no PRD binding)
