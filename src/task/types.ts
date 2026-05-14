@@ -44,6 +44,21 @@ export type TaskError =
 	| { kind: "directory-invalid"; path: string; reason: string };
 
 // ---------------------------------------------------------------------------
+// Resolve result
+// ---------------------------------------------------------------------------
+
+/**
+ * Result of resolving a task — includes the list of dependent tasks that
+ * became unblocked as a consequence.
+ */
+export interface ResolveResult {
+	/**
+	 * IDs of tasks that were previously blocked and are now unblocked.
+	 */
+	unblocked: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Task query helpers
 // ---------------------------------------------------------------------------
 

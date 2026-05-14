@@ -8,23 +8,8 @@ import type { PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import type { DependencyIndex } from "src/task/DependencyIndex";
 import { buildDependencyIndex } from "src/task/DependencyIndex";
-import type { Task, TaskError } from "src/task/types";
+import type { ResolveResult, Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";
-
-// ---------------------------------------------------------------------------
-// Resolve result
-// ---------------------------------------------------------------------------
-
-/**
- * Result of resolving a task — includes the list of dependent tasks that
- * became unblocked as a consequence.
- */
-export interface ResolveResult {
-	/**
-	 * IDs of tasks that were previously blocked and are now unblocked.
-	 */
-	unblocked: string[];
-}
 
 // ---------------------------------------------------------------------------
 // TaskService

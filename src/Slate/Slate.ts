@@ -8,15 +8,20 @@
  */
 
 import { PRDService } from "src/prd/PRDService";
-import type { PRD } from "src/prd/types";
+import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { buildDependencyIndex } from "src/task/DependencyIndex";
 import { TaskService } from "src/task/TaskService";
-import type { Task, TaskQueryFilter } from "src/task/types";
+import type {
+	ResolveResult,
+	Task,
+	TaskError,
+	TaskQueryFilter,
+} from "src/task/types";
 import type { Result } from "src/utils/result";
 
-import type { ISlate, ResolveResult, SlateError } from "./ISlate";
+import type { ISlate, SlateError } from "./ISlate";
 
 export type { ISlate, ResolveResult, SlateError } from "./ISlate";
 
@@ -170,8 +175,6 @@ export class Slate implements ISlate {
 // Error mapping — hides internal error types from callers
 // ---------------------------------------------------------------------------
 
-import type { PRDError } from "src/prd/types";
-
 function mapPRDError(error: PRDError): SlateError {
 	switch (error.kind) {
 		case "not-found":
@@ -197,54 +200,31 @@ function mapPRDError(error: PRDError): SlateError {
 	}
 }
 
-import type { TaskError } from "src/task/types";
-
 function mapTaskError(error: TaskError | PRDError): SlateError {
-	// Task.create can return PRDError when the referenced PRD is not found
-	if (error.kind === "not-found") {
-		return { kind: "task-not-found", id: (error as { id: string }).id };
+	switch (error.kind) {
+		case "not-found":
+			return { kind: "task-not-found", id: error.id };
+		case "invalid-title":
+			return { kind: "task-invalid-title", message: error.message };
+		case "invalid-status":
+			return { kind: "task-invalid-status", status: error.status };
+		case "invalid-priority":
+			return { kind: "task-invalid-priority", priority: error.priority };
+		case "corrupted-file":
+			return {
+				kind: "task-corrupted-file",
+				id: error.id,
+				message: error.message,
+			};
+		case "already-exists":
+			return { kind: "task-already-exists", id: error.id };
+		case "already-done":
+			return { kind: "task-already-done", id: error.id };
+		case "directory-invalid":
+			return {
+				kind: "task-directory-invalid",
+				path: error.path,
+				reason: error.reason,
+			};
 	}
-	if (error.kind === "invalid-title") {
-		return {
-			kind: "task-invalid-title",
-			message: (error as { message: string }).message,
-		};
-	}
-	if (error.kind === "invalid-status") {
-		return {
-			kind: "task-invalid-status",
-			status: (error as { status: string }).status,
-		};
-	}
-	if (error.kind === "invalid-priority") {
-		return {
-			kind: "task-invalid-priority",
-			priority: (error as { priority: string }).priority,
-		};
-	}
-	if (error.kind === "corrupted-file") {
-		return {
-			kind: "task-corrupted-file",
-			id: (error as { id: string }).id,
-			message: (error as { message: string }).message,
-		};
-	}
-	if (error.kind === "already-exists") {
-		return {
-			kind: "task-already-exists",
-			id: (error as { id: string }).id,
-		};
-	}
-	if (error.kind === "already-done") {
-		return { kind: "task-already-done", id: (error as { id: string }).id };
-	}
-	if (error.kind === "directory-invalid") {
-		return {
-			kind: "task-directory-invalid",
-			path: (error as { path: string }).path,
-			reason: (error as { reason: string }).reason,
-		};
-	}
-	// Exhaustive — TaskError covers all cases above
-	return { kind: "task-directory-invalid", path: "unknown", reason: "unknown" };
 }

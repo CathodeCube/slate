@@ -6,8 +6,10 @@
  * caller code.
  */
 import type { PRD } from "src/prd/types";
-import type { Task, TaskQueryFilter } from "src/task/types";
+import type { ResolveResult, Task, TaskQueryFilter } from "src/task/types";
 import type { Result } from "src/utils/result";
+
+export type { ResolveResult } from "src/task/types";
 
 // ---------------------------------------------------------------------------
 // SlateError — unified error type
@@ -42,21 +44,6 @@ export type SlateError =
 	| { kind: "store-not-found"; path: string }
 	| { kind: "store-is-file"; path: string }
 	| { kind: "store-not-writable"; path: string };
-
-// ---------------------------------------------------------------------------
-// Resolve result
-// ---------------------------------------------------------------------------
-
-/**
- * Result of resolving a task — includes the list of dependent tasks that
- * became unblocked as a consequence.
- */
-export interface ResolveResult {
-	/**
-	 * IDs of tasks that were previously blocked and are now unblocked.
-	 */
-	unblocked: string[];
-}
 
 // ---------------------------------------------------------------------------
 // ISlate interface

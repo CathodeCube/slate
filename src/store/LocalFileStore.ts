@@ -47,6 +47,55 @@ const TASK_DIR = "tasks";
 const TASK_FILE_EXT = ".md";
 
 /**
+ * Read all entity files from a directory, parsing and validating each.
+ *
+ * Skips files that fail schema validation (corrupted frontmatter).
+ *
+ * @param dir   - Directory containing entity files.
+ * @param ext   - File extension to filter.
+ * @param schema - Zod schema for frontmatter validation.
+ * @returns Array of successfully parsed entities, sorted by ID.
+ */
+function listEntities<T extends { id: string }>(
+	dir: string,
+	ext: string,
+	schema: {
+		safeParse(data: unknown): {
+			success: boolean;
+			data?: T;
+			error?: { message: string };
+		};
+	},
+): T[] {
+	if (!existsSync(dir)) {
+		return [];
+	}
+
+	const files = readdirSync(dir).filter((f) => f.endsWith(ext));
+	const entities: T[] = [];
+
+	for (const file of files) {
+		const filePath = join(dir, file);
+		const raw = readFileSync(filePath, "utf-8");
+		const { data } = matter(raw);
+
+		const parsed = schema.safeParse(data);
+		if (!parsed.success) {
+			continue;
+		}
+
+		entities.push(parsed.data as T);
+	}
+
+	entities.sort((a, b) => a.id.localeCompare(b.id));
+	return entities;
+}
+
+// ---------------------------------------------------------------------------
+// LocalFileStore
+// ---------------------------------------------------------------------------
+
+/**
  * File-based store implementation that reads and writes PRDs and tasks as
  * Markdown files with YAML frontmatter.
  *
@@ -167,36 +216,10 @@ export class LocalFileStore implements IStore {
 	 */
 	listPRDs(): Result<PRD[], PRDError> {
 		const prdDir = join(this.#dir, PRD_DIR);
-		if (!existsSync(prdDir)) {
-			return { ok: true, value: [] };
-		}
-
-		const files = readdirSync(prdDir).filter((f) => f.endsWith(PRD_FILE_EXT));
-		const prds: PRD[] = [];
-
-		for (const file of files) {
-			const filePath = join(prdDir, file);
-			const raw = readFileSync(filePath, "utf-8");
-			const { data } = matter(raw);
-
-			const parsed = prdFrontmatterSchema.safeParse(data);
-			if (!parsed.success) {
-				continue;
-			}
-
-			prds.push({
-				id: parsed.data.id,
-				title: parsed.data.title,
-				status: parsed.data.status,
-				priority: parsed.data.priority,
-				created: parsed.data.created,
-				updated: parsed.data.updated,
-			});
-		}
-
-		prds.sort((a, b) => a.id.localeCompare(b.id));
-
-		return { ok: true, value: prds };
+		return {
+			ok: true,
+			value: listEntities(prdDir, PRD_FILE_EXT, prdFrontmatterSchema),
+		};
 	}
 
 	// -- Task operations ------------------------------------------------------
@@ -340,37 +363,9 @@ export class LocalFileStore implements IStore {
 	 */
 	listTasks(): Result<Task[], TaskError> {
 		const taskDir = join(this.#dir, TASK_DIR);
-		if (!existsSync(taskDir)) {
-			return { ok: true, value: [] };
-		}
-
-		const files = readdirSync(taskDir).filter((f) => f.endsWith(TASK_FILE_EXT));
-		const tasks: Task[] = [];
-
-		for (const file of files) {
-			const filePath = join(taskDir, file);
-			const raw = readFileSync(filePath, "utf-8");
-			const { data } = matter(raw);
-
-			const parsed = taskFrontmatterSchema.safeParse(data);
-			if (!parsed.success) {
-				continue;
-			}
-
-			tasks.push({
-				id: parsed.data.id,
-				title: parsed.data.title,
-				status: parsed.data.status,
-				priority: parsed.data.priority,
-				dependencies: parsed.data.dependencies,
-				prd: parsed.data.prd,
-				created: parsed.data.created,
-				updated: parsed.data.updated,
-			});
-		}
-
-		tasks.sort((a, b) => a.id.localeCompare(b.id));
-
-		return { ok: true, value: tasks };
+		return {
+			ok: true,
+			value: listEntities(taskDir, TASK_FILE_EXT, taskFrontmatterSchema),
+		};
 	}
 }
