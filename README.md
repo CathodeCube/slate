@@ -18,29 +18,8 @@ Most issue trackers are built for human workflows: sprints, epics, burndown char
 > **Bun-only.** Slate requires Bun to run. It uses native Bun TypeScript resolution and does not support Node.js. Install [Bun](https://bun.sh/) (v1.0.0 or later) before proceeding.
 
 - Install [Bun](https://bun.sh/) (latest stable)
+- Install slate globally with: `bun add -g slate`
 - Tell your agent about Slate (More information below)
-
-#### Examples
-
-```bash
-# Create a PRD
-bunx slate prd create --title "My Feature"
-
-# Create a task under that PRD (body via stdin)
-echo "Implement the CLI parser with arg parsing." | bunx slate task create --title "Implement CLI parser" --prd <prd-id> --priority high
-
-# Body is optional — a task with just a title is valid
-bunx slate task create --title "Quick note" --priority low
-
-# List all tasks
-bunx slate task list
-
-# Update a task status
-bunx slate task update <task-id> --status in-progress
-
-# Close a task
-bunx slate task update <task-id> --status done
-```
 
 #### Configuring Your Agent
 
@@ -56,25 +35,25 @@ This project uses [Slate](https://github.com/) for issue tracking. Slate stores 
 **How to learn Slate's commands:**
 
 ```bash
-bunx slate overview
+slate overview
 ```
 
 Run this command to get a full overview of available commands. The output includes examples for creating PRDs and tasks (including multi-line bodies via stdin), listing tasks, updating status, and finding the next actionable task.
 
 **Key workflow:**
 
-1. `bunx slate init` — Initialize the `slate/` directory if not already done.
-2. `bunx slate prd create --title "..."` — Create a PRD for the feature.
-3. `bunx slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
-4. `bunx slate plan` — Find the next actionable task.
-5. `bunx slate task update <id> --status in-progress` — When starting work.
-6. `bunx slate task update <id> --status done` — When finished.
+1. `slate init` — Initialize the `slate/` directory if not already done.
+2. `slate prd create --title "..."` — Create a PRD for the feature.
+3. `slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
+4. `slate plan` — Find the next actionable task.
+5. `slate task update <id> --status in-progress` — When starting work.
+6. `slate task update <id> --status done` — When finished.
 ````
 
-## Architecture
+## Slate In Your Project
 
 ```
-project/
+your-project/
   slate/
     prds/           # PRD files (one per PRD)
       prd-001.md
@@ -99,7 +78,7 @@ updated: 2026-05-12
 Notes go here.
 ```
 
-## Core Concepts
+#### Core Concepts
 
 | Term | Description |
 |------|-------------|
@@ -108,6 +87,30 @@ Notes go here.
 | **Status** | One of: `todo`, `in-progress`, `done`, `blocked`. |
 | **Priority** | One of: `high`, `medium`, `low`. |
 | **Dependency** | A task can depend on other tasks by ID. A task is actionable only when all its dependencies are `done`. |
+
+## CLI Usage
+
+Slate is mainly intended to be used by AI agents, which will call this CLI. Of course it is possible to invoke the CLI manually too.
+
+```bash
+# Create a PRD
+slate prd create --title "My Feature"
+
+# Create a task under that PRD (body via stdin)
+echo "Implement the CLI parser with arg parsing." | slate task create --title "Implement CLI parser" --prd <prd-id> --priority high
+
+# Body is optional — a task with just a title is valid
+slate task create --title "Quick note" --priority low
+
+# List all tasks
+slate task list
+
+# Update a task status
+slate task update <task-id> --status in-progress
+
+# Close a task
+slate task update <task-id> --status done
+```
 
 ## Library Usage
 
@@ -140,6 +143,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for release notes.
 
 See [ROADMAP.md](./ROADMAP.md) for the phased feature plan.
 
-## Domain Glossary
+## Domain Context
 
-See [CONTEXT.md](./CONTEXT.md) for the full domain glossary and design decisions.
+See [CONTEXT.md](./CONTEXT.md) for the full domain context and design decisions.
