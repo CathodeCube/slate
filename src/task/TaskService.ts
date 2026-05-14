@@ -54,7 +54,7 @@ export class TaskService {
 		const now = new Date().toISOString();
 
 		const task: Task = {
-			id: this.store.nextTaskId(),
+			id: this.store.nextTaskID(),
 			title,
 			status,
 			priority,

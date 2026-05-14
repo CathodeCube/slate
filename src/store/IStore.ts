@@ -33,7 +33,7 @@ export interface IStore {
 	/**
 	 * Generate the next sequential PRD ID.
 	 */
-	nextPRDId(): string;
+	nextPRDID(): string;
 
 	// -- Task operations ------------------------------------------------------
 
@@ -55,5 +55,5 @@ export interface IStore {
 	/**
 	 * Generate the next sequential task ID.
 	 */
-	nextTaskId(): string;
+	nextTaskID(): string;
 }

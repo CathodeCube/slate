@@ -62,7 +62,7 @@ export class LocalFileStore implements IStore {
 	/**
 	 * Generate the next sequential PRD ID by scanning existing files.
 	 */
-	nextPRDId(): string {
+	nextPRDID(): string {
 		this.ensureDir();
 		const PRDDir = join(this.#dir, PRD_DIR);
 		const files = readdirSync(PRDDir).filter((f) => f.endsWith(PRD_FILE_EXT));
@@ -183,7 +183,7 @@ export class LocalFileStore implements IStore {
 		}
 	}
 
-	nextTaskId(): string {
+	nextTaskID(): string {
 		this.ensureTaskDir();
 		const taskDir = join(this.#dir, TASK_DIR);
 		const files = readdirSync(taskDir).filter((f) => f.endsWith(TASK_FILE_EXT));

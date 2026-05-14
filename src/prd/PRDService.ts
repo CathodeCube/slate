@@ -34,7 +34,7 @@ export class PRDService {
 		const priority = params.priority ?? "medium";
 
 		const prd: PRD = {
-			id: this.store.nextPRDId(),
+			id: this.store.nextPRDID(),
 			title,
 			status,
 			priority,
