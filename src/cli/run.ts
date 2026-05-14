@@ -1,8 +1,10 @@
+#!/usr/bin/env bun
+
 /**
  * Slate — CLI entry point.
  *
- * This file is the standalone CLI entry point. It is imported by the
- * `bun run start` script and executed directly — no guards needed.
+ * Executed directly via the `bin` field in package.json (bypassing `bun run`
+ * to avoid permission/sandboxing issues). Also used by `bun run start`.
  */
 import { main } from "src/cli/index";
 

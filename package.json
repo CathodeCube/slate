@@ -3,6 +3,9 @@
 	"version": "0.0.1",
 	"type": "module",
 	"main": "./src/index.ts",
+	"bin": {
+		"slate": "./src/cli/run.ts"
+	},
 	"exports": {
 		".": {
 			"types": "./src/index.ts",
