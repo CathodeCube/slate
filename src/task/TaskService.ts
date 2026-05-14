@@ -1,7 +1,6 @@
 import type { PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
 import type { Task, TaskError } from "src/task/types";
-import { detectCycle } from "src/utils/detect-cycle";
 import type { Result } from "src/utils/result";
 
 // ---------------------------------------------------------------------------
@@ -123,17 +122,7 @@ export class TaskService {
 			return { ok: false, error: readResult.error };
 		}
 
-		const task = readResult.value;
-
-		// Check for dependency cycles before modifying state
-		const cycle = detectCycle(id, (depId) => {
-			const depResult = this.store.readTask(depId);
-			if (!depResult.ok) return null;
-			return { dependencies: depResult.value.dependencies };
-		});
-		if (cycle) {
-			return { ok: false, error: { kind: "cycle-detected", cycle } };
-		}
+		const task: Task = { ...readResult.value };
 
 		// Mark the task as done
 		task.status = "done";

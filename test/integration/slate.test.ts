@@ -321,11 +321,11 @@ describe("Slate library — integration", () => {
 		expect(resolveResult.value.unblocked).toEqual([]);
 	});
 
-	it("taskResolve detects and rejects dependency cycles", () => {
+	it("taskResolve succeeds even when a cycle exists in the data", () => {
 		const storeDir = createTestDir();
 		const slate = new Slate({ dir: storeDir });
 
-		// Create tasks: A -> B -> C -> A (cycle)
+		// Create tasks: A -> B -> C
 		const taskA = assertOk(slate.taskCreate({ title: "Task A" }));
 		const taskB = assertOk(
 			slate.taskCreate({ title: "Task B", dependencies: [taskA.id] }),
@@ -333,7 +333,7 @@ describe("Slate library — integration", () => {
 		const taskC = assertOk(
 			slate.taskCreate({ title: "Task C", dependencies: [taskB.id] }),
 		);
-		// Make task A depend on task C to create a cycle using the store directly
+		// Create a cycle by making task A depend on task C using the store directly
 		const store = new LocalFileStore(storeDir);
 		const readA = store.readTask(taskA.id);
 		if (!readA.ok) return;
@@ -341,12 +341,9 @@ describe("Slate library — integration", () => {
 		readA.value.updated = new Date().toISOString();
 		store.updateTask(readA.value);
 
+		// resolve() no longer checks for cycles — it succeeds
 		const result = slate.taskResolve(taskA.id);
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.error.kind).toBe("cycle-detected");
-		if (result.error.kind !== "cycle-detected") return;
-		expect(result.error.cycle.length).toBeGreaterThan(0);
+		expect(result.ok).toBe(true);
 	});
 
 	it("taskResolve does not resolve when dependencies are not all done", () => {
