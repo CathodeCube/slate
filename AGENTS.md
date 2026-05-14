@@ -1,5 +1,6 @@
 # Important Rules
 
+ - Always read CONTEXT.md, CODE_STYLE.md and README.md.
  - You have no network access. Do not run commands that require network access (e.g. `bun install`).
  - Think before acting. Always analyze the problem, repository, and context before making changes.
  - Do not modify files until you understand the surrounding code and conventions.
