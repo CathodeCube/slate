@@ -7,12 +7,12 @@ const TEST_DIR = join(process.cwd(), ".test");
 
 export function setup() {
 	mkdirSync(TEST_DIR, { recursive: true });
-	// Return the teardown function so vitest knows to call it.
-	return function teardown() {
-		if (existsSync(TEST_DIR)) {
-			rmSync(TEST_DIR, { recursive: true, force: true });
-		}
-	};
+}
+
+export function teardown() {
+	if (existsSync(TEST_DIR)) {
+		rmSync(TEST_DIR, { recursive: true, force: true });
+	}
 }
 
 export function getTestDir(): string {
