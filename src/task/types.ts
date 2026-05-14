@@ -1,3 +1,9 @@
+/**
+ * Task entity types, error types, and query helpers.
+ *
+ * Defines the `Task` interface, `TaskError` discriminated union, and
+ * `TaskQueryFilter` type alias.
+ */
 import type { Priority } from "src/prd/types";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +24,9 @@ export interface Task {
 	updated: string;
 }
 
+/**
+ * Possible status values for a task.
+ */
 export type TaskStatus = "todo" | "in-progress" | "done" | "blocked";
 
 // ---------------------------------------------------------------------------

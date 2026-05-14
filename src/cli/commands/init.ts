@@ -1,3 +1,9 @@
+/**
+ * CLI command for initializing the Slate store directory structure.
+ *
+ * Creates the `prds/` and `tasks/` subdirectories under the configured
+ * store directory.
+ */
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -7,6 +13,15 @@ import { Command } from "commander";
 // init command
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `init` CLI command.
+ *
+ * Initializes the Slate store directory structure by creating the `prds/`
+ * and `tasks/` subdirectories under the given path.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function initCmd(defaultDir: string): Command {
 	const cmd = new Command("init");
 	cmd.description(

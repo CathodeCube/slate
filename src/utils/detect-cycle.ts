@@ -1,3 +1,10 @@
+/**
+ * DFS-based dependency cycle detection utility.
+ *
+ * Internal helper used by `TaskService.resolve` to detect circular
+ * dependencies before marking a task as done.
+ */
+
 // ---------------------------------------------------------------------------
 // Cycle detection helpers (internal)
 // ---------------------------------------------------------------------------

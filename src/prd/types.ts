@@ -1,3 +1,10 @@
+/**
+ * PRD entity types, error types, and status/priority enums.
+ *
+ * Defines the `PRD` interface, `PRDError` discriminated union, and the
+ * `PRDStatus` and `Priority` type aliases.
+ */
+
 // ---------------------------------------------------------------------------
 // PRD entity
 // ---------------------------------------------------------------------------
@@ -15,7 +22,14 @@ export interface PRD {
 	updated: string;
 }
 
+/**
+ * Possible status values for a PRD.
+ */
 export type PRDStatus = "todo" | "in-progress" | "done" | "blocked";
+
+/**
+ * Possible priority levels for a PRD or task.
+ */
 export type Priority = "high" | "medium" | "low";
 
 // ---------------------------------------------------------------------------

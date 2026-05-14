@@ -1,3 +1,9 @@
+/**
+ * Sequential ID generation utility.
+ *
+ * Scans a directory for files matching a prefix pattern and produces
+ * the next available sequential ID.
+ */
 import { readdirSync } from "node:fs";
 
 /**

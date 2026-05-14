@@ -1,3 +1,10 @@
+/**
+ * Stdin reader utility for CLI commands.
+ *
+ * Provides a function to read piped input from stdin, returning `null`
+ * when stdin is a TTY (no piped content).
+ */
+
 // ---------------------------------------------------------------------------
 // Stdin reader
 // ---------------------------------------------------------------------------

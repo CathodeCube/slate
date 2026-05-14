@@ -25,7 +25,7 @@ import {
 // ---------------------------------------------------------------------------
 
 /**
- * Default store directory used by CLI commands.
+ * Default path to the Slate store directory.
  */
 const DEFAULT_STORE_DIR = "./slate";
 

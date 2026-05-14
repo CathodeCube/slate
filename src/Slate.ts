@@ -1,3 +1,9 @@
+/**
+ * Slate — the single public entry point for programmatic access to the store.
+ *
+ * It wires `LocalFileStore` to `IStore` internally and exposes convenience
+ * accessors for PRD and task operations.
+ */
 import { PRDService } from "src/prd/PRDService";
 import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
@@ -13,6 +19,8 @@ import type { Result } from "src/utils/result";
 
 /**
  * Constructor parameters for the Slate library.
+ *
+ * @property dir - Path to the store directory containing `prds/` and `tasks/` subdirectories.
  */
 export interface SlateOptions {
 	/**

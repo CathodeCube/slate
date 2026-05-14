@@ -1,3 +1,8 @@
+/**
+ * CLI command implementations for PRD management subcommands.
+ *
+ * Exports: `prdListCmd`, `prdShowCmd`, `prdCreateCmd`.
+ */
 import { Command } from "commander";
 import { PRDService } from "src/prd/PRDService";
 import { LocalFileStore } from "src/store/LocalFileStore";
@@ -6,6 +11,15 @@ import { LocalFileStore } from "src/store/LocalFileStore";
 // prd list
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `prd list` CLI command.
+ *
+ * Lists all PRDs in the store, outputting one line per PRD with ID,
+ * title, status, and priority separated by tabs.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function prdListCmd(defaultDir: string): Command {
 	const cmd = new Command("list");
 	cmd.description("List PRDs");
@@ -42,6 +56,15 @@ export function prdListCmd(defaultDir: string): Command {
 // prd show
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `prd show` CLI command.
+ *
+ * Displays the details of a single PRD by ID, including title,
+ * status, priority, and timestamps.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function prdShowCmd(defaultDir: string): Command {
 	const cmd = new Command("show");
 	cmd.description("Show a PRD's details");
@@ -86,6 +109,15 @@ export function prdShowCmd(defaultDir: string): Command {
 // prd create
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `prd create` CLI command.
+ *
+ * Creates a new PRD with the given title, priority, and status.
+ * Defaults: priority = `"medium"`, status = `"todo"`.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function prdCreateCmd(defaultDir: string): Command {
 	const cmd = new Command("create");
 	cmd.description("Create a new PRD");

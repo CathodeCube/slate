@@ -1,3 +1,10 @@
+/**
+ * Single store interface that handles both PRD and task operations.
+ *
+ * A single implementation (`LocalFileStore`) provides concrete file-based storage.
+ * The interface gives us testability and a swap point if we ever need a different
+ * storage backend.
+ */
 import type { PRD, PRDError } from "src/prd/types";
 import type { Task, TaskError } from "src/task/types";
 import type { Result } from "src/utils/result";

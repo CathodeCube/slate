@@ -1,9 +1,24 @@
+/**
+ * CLI command that prints an agent-friendly overview of all Slate commands.
+ *
+ * Used as a quick reference for AI agents to learn the available commands,
+ * their options, and common usage patterns.
+ */
 import { Command } from "commander";
 
 // ---------------------------------------------------------------------------
 // overview command
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `overview` CLI command.
+ *
+ * Prints an agent-friendly reference of all available Slate commands,
+ * their options, and common usage patterns.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function overviewCmd(defaultDir: string): Command {
 	const cmd = new Command("overview");
 	cmd.description("Show an agent-friendly overview of Slate commands");

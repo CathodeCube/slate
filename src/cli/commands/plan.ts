@@ -1,3 +1,10 @@
+/**
+ * CLI command that shows the next actionable task.
+ *
+ * An actionable task is one that is not done or blocked and has all
+ * its dependencies satisfied. Tasks are sorted by priority (high → medium
+ * → low) then by creation date.
+ */
 import { Command } from "commander";
 import { LocalFileStore } from "src/store/LocalFileStore";
 import { TaskService } from "src/task/TaskService";
@@ -7,7 +14,15 @@ import { TaskService } from "src/task/TaskService";
 // ---------------------------------------------------------------------------
 
 /**
- * Map priority string to a numeric sort key (lower = higher priority).
+ * Map a priority string to a numeric sort key for ordering.
+ *
+ * Lower numbers represent higher priority:
+ *   - `"high"` → 0
+ *   - `"medium"` → 1
+ *   - `"low"` → 2
+ *
+ * @param priority - The priority string to map.
+ * @returns A numeric sort key (0 for high, 1 for medium, 2 for low, 3 for unknown).
  */
 function priorityKey(priority: string): number {
 	switch (priority) {
@@ -26,6 +41,16 @@ function priorityKey(priority: string): number {
 // plan command
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `plan` CLI command.
+ *
+ * Shows the next actionable task — the highest-priority task whose
+ * dependencies are all satisfied. Tasks are sorted by priority (high →
+ * medium → low) then by creation date.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function planCmd(defaultDir: string): Command {
 	const cmd = new Command("plan");
 	cmd.description("Show the next actionable task");

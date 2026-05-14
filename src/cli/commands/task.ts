@@ -1,3 +1,9 @@
+/**
+ * CLI command implementations for task management subcommands.
+ *
+ * Exports: `taskListCmd`, `taskUpdateCmd`, `taskCreateCmd`, `taskResolveCmd`,
+ * `taskDeleteCmd`.
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -10,6 +16,15 @@ import { TaskService } from "src/task/TaskService";
 // task list
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `task list` CLI command.
+ *
+ * Lists all tasks in the store, optionally filtered by status.
+ * Output is one line per task with ID, title, status, and priority separated by tabs.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function taskListCmd(defaultDir: string): Command {
 	const cmd = new Command("list");
 	cmd.description("List tasks");
@@ -61,6 +76,15 @@ export function taskListCmd(defaultDir: string): Command {
 // task update
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `task update` CLI command.
+ *
+ * Updates a task's status and/or priority by ID.
+ * Requires at least one of `--status` or `--priority`.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function taskUpdateCmd(defaultDir: string): Command {
 	const cmd = new Command("update");
 	cmd.description("Update a task");
@@ -153,6 +177,16 @@ export function taskUpdateCmd(defaultDir: string): Command {
 // task create
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `task create` CLI command.
+ *
+ * Creates a new task with the given title, priority, status, and optional
+ * parent PRD. Body content can be piped via stdin.
+ * Defaults: priority = `"medium"`, status = `"todo"`.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function taskCreateCmd(defaultDir: string): Command {
 	const cmd = new Command("create");
 	cmd.description("Create a new task");
@@ -241,6 +275,15 @@ export function taskCreateCmd(defaultDir: string): Command {
 // task resolve
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `task resolve` CLI command.
+ *
+ * Marks a task as done and reports any dependent tasks that become
+ * unblocked as a result.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function taskResolveCmd(defaultDir: string): Command {
 	const cmd = new Command("resolve");
 	cmd.description("Resolve a task (mark as done)");
@@ -299,6 +342,14 @@ export function taskResolveCmd(defaultDir: string): Command {
 // task delete
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the `task delete` CLI command.
+ *
+ * Deletes a task by ID from the store.
+ *
+ * @param defaultDir - The default store directory path to use.
+ * @returns The configured Commander command.
+ */
 export function taskDeleteCmd(defaultDir: string): Command {
 	const cmd = new Command("delete");
 	cmd.description("Delete a task");
