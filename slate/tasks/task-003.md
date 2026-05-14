@@ -3,12 +3,12 @@ id: task-003
 title: >-
   Move Zod schemas out of LocalFileStore — single source of truth for entity
   serialization
-status: todo
+status: done
 priority: medium
 dependencies: []
 prd: prd-001
 created: '2026-05-13T12:40:53.673Z'
-updated: '2026-05-13T12:40:53.673Z'
+updated: '2026-05-13T13:08:24.683Z'
 ---
 
 

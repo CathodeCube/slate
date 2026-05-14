@@ -9,13 +9,14 @@ import {
 import { join } from "node:path";
 
 import matter from "gray-matter";
-import type { PRD, PRDError, PRDStatus, Priority } from "src/prd/types";
+import { prdFrontmatterSchema } from "src/prd/schema";
+import type { PRD, PRDError } from "src/prd/types";
 import type { IStore } from "src/store/IStore";
-import type { Task, TaskError, TaskStatus } from "src/task/types";
+import { taskFrontmatterSchema } from "src/task/schema";
+import type { Task, TaskError } from "src/task/types";
 import { readEntity } from "src/utils/entity";
 import { nextSequentialID } from "src/utils/id";
 import type { Result } from "src/utils/result";
-import zod from "zod";
 
 // ---------------------------------------------------------------------------
 // LocalFileStore
@@ -44,36 +45,6 @@ const TASK_DIR = "tasks";
  * File extension for task markdown files.
  */
 const TASK_FILE_EXT = ".md";
-
-// ---------------------------------------------------------------------------
-// Zod schemas for YAML frontmatter validation
-// ---------------------------------------------------------------------------
-
-/**
- * Zod schema for PRD YAML frontmatter fields.
- */
-const frontmatterSchema = zod.object({
-	id: zod.string(),
-	title: zod.string(),
-	status: zod.enum(["todo", "in-progress", "done", "blocked"]),
-	priority: zod.enum(["high", "medium", "low"]),
-	created: zod.string(),
-	updated: zod.string(),
-});
-
-/**
- * Zod schema for Task YAML frontmatter fields.
- */
-const taskFrontmatterSchema = zod.object({
-	id: zod.string(),
-	title: zod.string(),
-	status: zod.enum(["todo", "in-progress", "done", "blocked"]),
-	priority: zod.enum(["high", "medium", "low"]),
-	dependencies: zod.array(zod.string()),
-	prd: zod.string().optional(),
-	created: zod.string(),
-	updated: zod.string(),
-});
 
 /**
  * File-based store implementation that reads and writes PRDs and tasks as
@@ -184,19 +155,12 @@ export class LocalFileStore implements IStore {
 			prdDir,
 			id,
 			PRD_FILE_EXT,
-			frontmatterSchema,
-			(data: {
-				id: string;
-				title: string;
-				status: string;
-				priority: string;
-				created: string;
-				updated: string;
-			}) => ({
+			prdFrontmatterSchema,
+			(data) => ({
 				id: data.id,
 				title: data.title,
-				status: data.status as PRDStatus,
-				priority: data.priority as Priority,
+				status: data.status,
+				priority: data.priority,
 				created: data.created,
 				updated: data.updated,
 			}),
@@ -228,7 +192,7 @@ export class LocalFileStore implements IStore {
 			const raw = readFileSync(filePath, "utf-8");
 			const { data } = matter(raw);
 
-			const parsed = frontmatterSchema.safeParse(data);
+			const parsed = prdFrontmatterSchema.safeParse(data);
 			if (!parsed.success) {
 				continue;
 			}
@@ -373,20 +337,11 @@ export class LocalFileStore implements IStore {
 			id,
 			TASK_FILE_EXT,
 			taskFrontmatterSchema,
-			(data: {
-				id: string;
-				title: string;
-				status: string;
-				priority: string;
-				dependencies: string[];
-				prd?: string;
-				created: string;
-				updated: string;
-			}) => ({
+			(data) => ({
 				id: data.id,
 				title: data.title,
-				status: data.status as TaskStatus,
-				priority: data.priority as Priority,
+				status: data.status,
+				priority: data.priority,
 				dependencies: data.dependencies,
 				prd: data.prd,
 				created: data.created,
