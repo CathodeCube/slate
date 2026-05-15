@@ -33,7 +33,7 @@ export interface IStore {
 	/**
 	 * Check if a PRD file exists.
 	 */
-	existsPRD(id: string): boolean;
+	existsPRD(id: string): Promise<boolean>;
 
 	/**
 	 * Create a PRD file in the store.

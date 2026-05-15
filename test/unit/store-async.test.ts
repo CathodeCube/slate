@@ -16,8 +16,8 @@ describe("IStore — async interface contract", () => {
 
 	// -- PRD operations -------------------------------------------------------
 
-	it("existsPRD is synchronous and returns boolean", () => {
-		const result = store.existsPRD("prd-001");
+	it("existsPRD is async and returns boolean", async () => {
+		const result = await store.existsPRD("prd-001");
 		expect(result).toBe(false);
 	});
 

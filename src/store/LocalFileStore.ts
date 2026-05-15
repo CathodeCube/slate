@@ -138,7 +138,7 @@ export class LocalFileStore implements IStore {
 	/**
 	 * Check if a PRD file exists.
 	 */
-	existsPRD(id: string): boolean {
+	async existsPRD(id: string): Promise<boolean> {
 		const prdDir = join(this.#dir, PRD_DIR);
 		if (!existsSync(prdDir)) {
 			return false;

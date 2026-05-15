@@ -104,7 +104,7 @@ export class TaskService {
 
 		// Validate PRD reference if provided
 		if (params.prd !== undefined) {
-			if (!this.store.existsPRD(params.prd)) {
+			if (!(await this.store.existsPRD(params.prd))) {
 				return {
 					ok: false,
 					error: { kind: "not-found", id: params.prd },

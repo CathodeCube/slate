@@ -1,13 +1,13 @@
 ---
 id: task-007
 title: Make PRDService and TaskService async
-status: todo
+status: done
 priority: high
 dependencies:
   - task-006
 prd: prd-002
 created: '2026-05-15T08:23:46.120Z'
-updated: '2026-05-15T08:23:46.120Z'
+updated: '2026-05-15T08:44:56.207Z'
 ---
 
 
