@@ -125,18 +125,24 @@ import { Slate } from "@cathodecube/slate";
 
 const slate = new Slate({ dir: "./slate" });
 
-// Create a task
-const result = await slate.tasks.create({
+// Create a task (returns Result<Task, SlateError>)
+const result = slate.taskCreate({
   title: "Implement CLI parser",
   priority: "high",
   prd: "prd-001",
 });
 
-// Query tasks
-const actionable = await slate.tasks.query({
-  where: { status: "todo" },
-  filter: (task) => task.dependencies.every((id) => slate.isDone(id)),
-});
+// List all tasks, optionally filtered
+const allTasks = slate.taskList();
+
+// Filter tasks by status
+const todoTasks = slate.taskList((task) => task.status === "todo");
+
+// Update a task's status
+slate.taskUpdate(taskId, { status: "in-progress" });
+
+// Resolve a task (mark as done) — returns unblocked dependents
+const resolved = slate.taskResolve(taskId);
 ```
 
 ## Changelog
