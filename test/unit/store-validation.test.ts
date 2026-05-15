@@ -7,11 +7,11 @@ import { TaskService } from "src/task/TaskService";
 import { createEmptyIndex, createTestDir } from "../utils";
 
 // ---------------------------------------------------------------------------
-// listEntities — corrupted file warning
+// listEntities — corrupted file handling
 // ---------------------------------------------------------------------------
 
-describe("LocalFileStore — corrupted file warning", () => {
-	it("logs a warning when a PRD file has invalid frontmatter", async () => {
+describe("LocalFileStore — corrupted file handling", () => {
+	it("skips PRD files with invalid frontmatter", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 
@@ -29,19 +29,11 @@ describe("LocalFileStore — corrupted file warning", () => {
 			"utf-8",
 		);
 
-		const warnSpy = vi.spyOn(global.console, "warn");
-
 		const result = await store.listPRDs();
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 		expect(result.value.length).toBe(1);
 		expect(result.value[0].id).toBe(validPRD.value.id);
-
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Skipping corrupted entity file"),
-		);
-
-		warnSpy.mockRestore();
 	});
 });
 

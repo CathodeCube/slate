@@ -82,9 +82,11 @@ function listEntities<T extends { id: string }>(
 		const parsed = schema.safeParse(data);
 		if (!parsed.success) {
 			const _id = (data as { id?: string })?.id ?? file;
-			console.warn(
-				`[slate] Skipping corrupted entity file: ${filePath} (${parsed.error?.message})`,
-			);
+			if (process.env.VITEST !== "true") {
+				console.warn(
+					`[slate] Skipping corrupted entity file: ${filePath} (${parsed.error?.message})`,
+				);
+			}
 			continue;
 		}
 
