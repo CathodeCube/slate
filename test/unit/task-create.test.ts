@@ -8,18 +8,18 @@ import { TaskService } from "src/task/TaskService";
 import { createEmptyIndex, createTestDir } from "../utils";
 
 describe("CLI task create — end-to-end", () => {
-	it("creates a file in slate/tasks/ with correct YAML frontmatter", () => {
+	it("creates a file in slate/tasks/ with correct YAML frontmatter", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
 		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a PRD first so the task can reference it
-		const prdResult = prdService.create({ title: "Test PRD" });
+		const prdResult = await prdService.create({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
 		if (!prdResult.ok) return;
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Test Task",
 			priority: "high",
 			prd: prdResult.value.id,
@@ -49,13 +49,13 @@ describe("CLI task create — end-to-end", () => {
 		expect(data.updated).toBeDefined();
 	});
 
-	it("generates sequential IDs that increment", () => {
+	it("generates sequential IDs that increment", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result1 = service.create({ title: "First Task" });
-		const result2 = service.create({ title: "Second Task" });
+		const result1 = await service.create({ title: "First Task" });
+		const result2 = await service.create({ title: "Second Task" });
 
 		expect(result1.ok).toBe(true);
 		expect(result2.ok).toBe(true);
@@ -70,12 +70,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(files.length).toBe(2);
 	});
 
-	it("defaults status to todo", () => {
+	it("defaults status to todo", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({ title: "Default Status Task" });
+		const result = await service.create({ title: "Default Status Task" });
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
@@ -83,12 +83,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(result.value.status).toBe("todo");
 	});
 
-	it("accepts custom priority and status", () => {
+	it("accepts custom priority and status", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Custom Task",
 			priority: "high",
 			status: "in-progress",
@@ -101,18 +101,18 @@ describe("CLI task create — end-to-end", () => {
 		expect(result.value.status).toBe("in-progress");
 	});
 
-	it("stores PRD reference in frontmatter", () => {
+	it("stores PRD reference in frontmatter", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
 		const service = new TaskService(store, createEmptyIndex());
 
 		// Create a PRD first so the task can reference it
-		const prdResult = prdService.create({ title: "Test PRD" });
+		const prdResult = await prdService.create({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
 		if (!prdResult.ok) return;
 
-		const result = service.create({
+		const result = await service.create({
 			title: "PRD-bound Task",
 			prd: prdResult.value.id,
 		});
@@ -129,12 +129,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(data.prd).toBe(prdResult.value.id);
 	});
 
-	it("accepts custom dependencies", () => {
+	it("accepts custom dependencies", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Dependent Task",
 			dependencies: ["task-001", "task-002"],
 		});
@@ -153,12 +153,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(data.dependencies).toEqual(["task-001", "task-002"]);
 	});
 
-	it("rejects empty title", () => {
+	it("rejects empty title", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({ title: "  " });
+		const result = await service.create({ title: "  " });
 
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
@@ -166,12 +166,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(result.error.kind).toBe("invalid-title");
 	});
 
-	it("works without PRD (ad-hoc task)", () => {
+	it("works without PRD (ad-hoc task)", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Ad-hoc Task",
 			priority: "low",
 		});
@@ -193,7 +193,7 @@ describe("CLI task create — end-to-end", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Task with Body",
 			priority: "medium",
 		});
@@ -217,12 +217,12 @@ describe("CLI task create — end-to-end", () => {
 		expect(content.trim()).toBe(body);
 	});
 
-	it("defaults priority to medium", () => {
+	it("defaults priority to medium", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({ title: "Default Priority Task" });
+		const result = await service.create({ title: "Default Priority Task" });
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;

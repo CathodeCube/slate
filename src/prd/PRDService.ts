@@ -77,14 +77,14 @@ export class PRDService {
 	 * @param id - The PRD ID to read.
 	 * @returns The PRD entity on success, or an error if the PRD is not found or corrupted.
 	 */
-	read(id: string): Result<PRD, PRDError> {
-		const result = this.store.readPRD(id);
+	async read(id: string): Promise<Result<PRD, PRDError>> {
+		const result = await this.store.readPRD(id);
 		if (!result.ok) {
 			return result;
 		}
 
 		const prd = result.value;
-		const tasksResult = this.store.listTasks();
+		const tasksResult = await this.store.listTasks();
 		const status: PRDStatus = tasksResult.ok
 			? computePRDStatus(getTasksForPRD(tasksResult.value, () => true, id))
 			: "todo";
@@ -100,13 +100,13 @@ export class PRDService {
 	 *
 	 * @returns All PRD entities on success, or an error if the store directory is invalid.
 	 */
-	list(): Result<PRD[], PRDError> {
-		const prdResult = this.store.listPRDs();
+	async list(): Promise<Result<PRD[], PRDError>> {
+		const prdResult = await this.store.listPRDs();
 		if (!prdResult.ok) {
 			return prdResult;
 		}
 
-		const tasksResult = this.store.listTasks();
+		const tasksResult = await this.store.listTasks();
 		const allTasks = tasksResult.ok ? tasksResult.value : [];
 
 		const prds = prdResult.value.map((prd) => {
@@ -131,10 +131,10 @@ export class PRDService {
 	 * @param params.priority - Optional priority level. Defaults to `"medium"`.
 	 * @returns The created PRD on success, or an error if validation fails or the store write fails.
 	 */
-	create(params: {
+	async create(params: {
 		title: string;
 		priority?: Priority;
-	}): Result<PRD, PRDError> {
+	}): Promise<Result<PRD, PRDError>> {
 		const title = params.title.trim();
 		if (!title) {
 			return {
@@ -155,7 +155,7 @@ export class PRDService {
 			updated: now,
 		};
 
-		const result = this.store.createPRD(prd);
+		const result = await this.store.createPRD(prd);
 		if (!result.ok) {
 			return result;
 		}

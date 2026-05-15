@@ -11,13 +11,13 @@ import { createEmptyIndex, createTestDir } from "../utils";
 // ---------------------------------------------------------------------------
 
 describe("LocalFileStore — corrupted file warning", () => {
-	it("logs a warning when a PRD file has invalid frontmatter", () => {
+	it("logs a warning when a PRD file has invalid frontmatter", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 
 		// Create a valid PRD first so the prds/ directory exists
 		const prdService = new PRDService(store);
-		const validPRD = prdService.create({ title: "Valid PRD" });
+		const validPRD = await prdService.create({ title: "Valid PRD" });
 		expect(validPRD.ok).toBe(true);
 		if (!validPRD.ok) return;
 
@@ -31,7 +31,7 @@ describe("LocalFileStore — corrupted file warning", () => {
 
 		const warnSpy = vi.spyOn(global.console, "warn");
 
-		const result = store.listPRDs();
+		const result = await store.listPRDs();
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 		expect(result.value.length).toBe(1);
@@ -79,12 +79,12 @@ describe("LocalFileStore — constructor", () => {
 // ---------------------------------------------------------------------------
 
 describe("createPRD — already-exists check", () => {
-	it("returns already-exists error when PRD file already exists", () => {
+	it("returns already-exists error when PRD file already exists", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const first = service.create({ title: "First PRD" });
+		const first = await service.create({ title: "First PRD" });
 		expect(first.ok).toBe(true);
 		if (!first.ok) return;
 
@@ -94,7 +94,7 @@ describe("createPRD — already-exists check", () => {
 		});
 
 		// nextPRDID will generate a new ID, so we need to test via the store directly
-		const storeResult = store.createPRD({
+		const storeResult = await store.createPRD({
 			id: first.value.id,
 			title: "Duplicate",
 			status: "todo",
@@ -114,16 +114,16 @@ describe("createPRD — already-exists check", () => {
 // ---------------------------------------------------------------------------
 
 describe("createTask — already-exists check", () => {
-	it("returns already-exists error when task file already exists", () => {
+	it("returns already-exists error when task file already exists", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const first = service.create({ title: "First Task" });
+		const first = await service.create({ title: "First Task" });
 		expect(first.ok).toBe(true);
 		if (!first.ok) return;
 
-		const duplicate = store.createTask({
+		const duplicate = await store.createTask({
 			id: first.value.id,
 			title: "Duplicate",
 			status: "todo",
@@ -144,12 +144,12 @@ describe("createTask — already-exists check", () => {
 // ---------------------------------------------------------------------------
 
 describe("TaskService.create — PRD validation", () => {
-	it("returns not-found error when referenced PRD does not exist", () => {
+	it("returns not-found error when referenced PRD does not exist", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Task with missing PRD",
 			prd: "prd-999",
 		});
@@ -159,17 +159,17 @@ describe("TaskService.create — PRD validation", () => {
 		expect(result.error.kind).toBe("not-found");
 	});
 
-	it("succeeds when referenced PRD exists", () => {
+	it("succeeds when referenced PRD exists", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const prdService = new PRDService(store);
 		const taskService = new TaskService(store, createEmptyIndex());
 
-		const prdResult = prdService.create({ title: "Test PRD" });
+		const prdResult = await prdService.create({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
 		if (!prdResult.ok) return;
 
-		const taskResult = taskService.create({
+		const taskResult = await taskService.create({
 			title: "Task with valid PRD",
 			prd: prdResult.value.id,
 		});
@@ -179,12 +179,12 @@ describe("TaskService.create — PRD validation", () => {
 		expect(taskResult.value.prd).toBe(prdResult.value.id);
 	});
 
-	it("does not validate PRD when prd is not provided", () => {
+	it("does not validate PRD when prd is not provided", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Ad-hoc task without PRD",
 		});
 

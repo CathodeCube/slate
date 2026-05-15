@@ -35,7 +35,7 @@ export function taskListCmd(defaultDir: string): Command {
 	);
 	cmd.action(async (opts: { status?: string }) => {
 		const slate = createSlate(defaultDir);
-		const listResult = slate.taskList();
+		const listResult = await slate.taskList();
 
 		if (!listResult.ok) {
 			handleError(listResult.error);
@@ -127,7 +127,7 @@ export function taskUpdateCmd(defaultDir: string): Command {
 				process.exit(1);
 			}
 
-			const result = slate.taskUpdate(id, updates);
+			const result = await slate.taskUpdate(id, updates);
 
 			if (!result.ok) {
 				handleError(result.error);
@@ -173,7 +173,7 @@ export function taskCreateCmd(defaultDir: string): Command {
 
 		const stdinBody = await readStdin();
 
-		const result = slate.taskCreate({
+		const result = await slate.taskCreate({
 			title: opts.title,
 			priority: opts.priority as "high" | "medium" | "low",
 			status: opts.status as "todo" | "in-progress" | "done" | "blocked",
@@ -219,7 +219,7 @@ export function taskResolveCmd(defaultDir: string): Command {
 	cmd.action(async (id: string) => {
 		const slate = createSlate(defaultDir);
 
-		const result = slate.taskResolve(id);
+		const result = await slate.taskResolve(id);
 
 		if (!result.ok) {
 			handleError(result.error);
@@ -255,7 +255,7 @@ export function taskDeleteCmd(defaultDir: string): Command {
 	cmd.action(async (id: string) => {
 		const slate = createSlate(defaultDir);
 
-		const result = slate.taskDelete(id);
+		const result = await slate.taskDelete(id);
 
 		if (!result.ok) {
 			handleError(result.error);

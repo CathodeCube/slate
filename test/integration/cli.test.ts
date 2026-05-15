@@ -30,9 +30,9 @@ describe("CLI task list", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		service.create({ title: "Task A" });
-		service.create({ title: "Task B", status: "in-progress" });
-		service.create({ title: "Task C", status: "done" });
+		await service.create({ title: "Task A" });
+		await service.create({ title: "Task B", status: "in-progress" });
+		await service.create({ title: "Task C", status: "done" });
 
 		const { stdout } = runSlate(["task", "list"], { cwd: projectDir });
 
@@ -53,9 +53,9 @@ describe("CLI task list", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		service.create({ title: "Task A", status: "todo" });
-		service.create({ title: "Task B", status: "in-progress" });
-		service.create({ title: "Task C", status: "done" });
+		await service.create({ title: "Task A", status: "todo" });
+		await service.create({ title: "Task B", status: "in-progress" });
+		await service.create({ title: "Task C", status: "done" });
 
 		const { stdout } = runSlate(["task", "list", "--status", "in-progress"], {
 			cwd: projectDir,
@@ -87,7 +87,7 @@ describe("CLI task update", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Task to update" });
+		const createResult = await service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -115,7 +115,7 @@ describe("CLI task update", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Task to update" });
+		const createResult = await service.create({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -151,7 +151,7 @@ describe("CLI task update", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Task" });
+		const createResult = await service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -172,7 +172,7 @@ describe("CLI task update", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Task" });
+		const createResult = await service.create({ title: "Task" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -193,7 +193,7 @@ describe("CLI task update", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Original title" });
+		const createResult = await service.create({ title: "Original title" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -225,8 +225,8 @@ describe("CLI prd list", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		service.create({ title: "PRD A" });
-		service.create({ title: "PRD B" });
+		await service.create({ title: "PRD A" });
+		await service.create({ title: "PRD B" });
 
 		const { stdout } = runSlate(["prd", "list"], { cwd: projectDir });
 
@@ -257,7 +257,7 @@ describe("CLI prd show", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const createResult = service.create({
+		const createResult = await service.create({
 			title: "Test PRD",
 			priority: "high",
 		});
@@ -385,7 +385,7 @@ describe("CLI task resolve", () => {
 		const { LocalFileStore } = await import("src/store/LocalFileStore");
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
-		const createResult = service.create({ title: "Task to resolve" });
+		const createResult = await service.create({ title: "Task to resolve" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -413,12 +413,12 @@ describe("CLI task resolve", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const parent = assertOk(service.create({ title: "Parent" }));
+		const parent = assertOk(await service.create({ title: "Parent" }));
 		const child1 = assertOk(
-			service.create({ title: "Child 1", dependencies: [parent.id] }),
+			await service.create({ title: "Child 1", dependencies: [parent.id] }),
 		);
 		const child2 = assertOk(
-			service.create({ title: "Child 2", dependencies: [parent.id] }),
+			await service.create({ title: "Child 2", dependencies: [parent.id] }),
 		);
 
 		const { stdout } = runSlate(["task", "resolve", parent.id], {
@@ -455,7 +455,7 @@ describe("CLI task delete", () => {
 		const store = new LocalFileStore(storeDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		const createResult = service.create({ title: "Task to delete" });
+		const createResult = await service.create({ title: "Task to delete" });
 		expect(createResult.ok).toBe(true);
 		const taskId = createResult.ok ? createResult.value.id : "";
 
@@ -507,10 +507,17 @@ describe("CLI plan", () => {
 		const store = new LocalFileStore(slateDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		assertOk(service.create({ title: "Low priority task", priority: "low" }));
-		assertOk(service.create({ title: "High priority task", priority: "high" }));
 		assertOk(
-			service.create({ title: "Medium priority task", priority: "medium" }),
+			await service.create({ title: "Low priority task", priority: "low" }),
+		);
+		assertOk(
+			await service.create({ title: "High priority task", priority: "high" }),
+		);
+		assertOk(
+			await service.create({
+				title: "Medium priority task",
+				priority: "medium",
+			}),
 		);
 
 		const { stdout, exitCode } = runSlate(["plan"], { cwd: projectDir });
@@ -531,17 +538,17 @@ describe("CLI plan", () => {
 		const service = new TaskService(store, createEmptyIndex());
 
 		const blockingDep = assertOk(
-			service.create({ title: "Blocking dep", priority: "low" }),
+			await service.create({ title: "Blocking dep", priority: "low" }),
 		);
 		const blocked = assertOk(
-			service.create({
+			await service.create({
 				title: "Blocked task",
 				priority: "high",
 				dependencies: [blockingDep.id],
 			}),
 		);
 		const actionable = assertOk(
-			service.create({ title: "Actionable task", priority: "medium" }),
+			await service.create({ title: "Actionable task", priority: "medium" }),
 		);
 
 		const { stdout, exitCode } = runSlate(["plan"], { cwd: projectDir });
@@ -560,8 +567,10 @@ describe("CLI plan", () => {
 		const store = new LocalFileStore(slateDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		assertOk(service.create({ title: "Done task", status: "done" }));
-		assertOk(service.create({ title: "Blocked task", status: "blocked" }));
+		assertOk(await service.create({ title: "Done task", status: "done" }));
+		assertOk(
+			await service.create({ title: "Blocked task", status: "blocked" }),
+		);
 
 		const { stdout, exitCode } = runSlate(["plan"], { cwd: projectDir });
 
@@ -579,21 +588,21 @@ describe("CLI plan", () => {
 		const service = new TaskService(store, createEmptyIndex());
 
 		const blocker = assertOk(
-			service.create({
+			await service.create({
 				title: "Blocker task",
 				priority: "high",
 				dependencies: ["task-999"],
 			}),
 		);
 		assertOk(
-			service.create({
+			await service.create({
 				title: "Task A",
 				priority: "high",
 				dependencies: [blocker.id],
 			}),
 		);
 		assertOk(
-			service.create({
+			await service.create({
 				title: "Task B",
 				priority: "medium",
 				dependencies: [blocker.id],
@@ -615,8 +624,8 @@ describe("CLI plan", () => {
 		const store = new LocalFileStore(slateDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		assertOk(service.create({ title: "First task", priority: "high" }));
-		assertOk(service.create({ title: "Second task", priority: "high" }));
+		assertOk(await service.create({ title: "First task", priority: "high" }));
+		assertOk(await service.create({ title: "Second task", priority: "high" }));
 
 		const { stdout, exitCode } = runSlate(["plan"], { cwd: projectDir });
 
@@ -633,9 +642,15 @@ describe("CLI plan", () => {
 		const store = new LocalFileStore(slateDir);
 		const service = new TaskService(store, createEmptyIndex());
 
-		assertOk(service.create({ title: "Active task", priority: "medium" }));
 		assertOk(
-			service.create({ title: "Done task", status: "done", priority: "high" }),
+			await service.create({ title: "Active task", priority: "medium" }),
+		);
+		assertOk(
+			await service.create({
+				title: "Done task",
+				status: "done",
+				priority: "high",
+			}),
 		);
 
 		const { stdout, exitCode } = runSlate(["plan"], { cwd: projectDir });

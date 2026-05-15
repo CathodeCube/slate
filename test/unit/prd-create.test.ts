@@ -7,12 +7,12 @@ import { LocalFileStore } from "src/store/LocalFileStore";
 import { createTestDir } from "../utils";
 
 describe("CLI prd create — end-to-end", () => {
-	it("creates a file in slate/prds/ with correct YAML frontmatter", () => {
+	it("creates a file in slate/prds/ with correct YAML frontmatter", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const result = service.create({ title: "Test PRD" });
+		const result = await service.create({ title: "Test PRD" });
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
@@ -35,13 +35,13 @@ describe("CLI prd create — end-to-end", () => {
 		expect(data.updated).toBeDefined();
 	});
 
-	it("generates sequential IDs that increment", () => {
+	it("generates sequential IDs that increment", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const result1 = service.create({ title: "First PRD" });
-		const result2 = service.create({ title: "Second PRD" });
+		const result1 = await service.create({ title: "First PRD" });
+		const result2 = await service.create({ title: "Second PRD" });
 
 		expect(result1.ok).toBe(true);
 		expect(result2.ok).toBe(true);
@@ -56,12 +56,12 @@ describe("CLI prd create — end-to-end", () => {
 		expect(files.length).toBe(2);
 	});
 
-	it("returns status 'todo' when no children exist", () => {
+	it("returns status 'todo' when no children exist", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const result = service.create({ title: "Default Status PRD" });
+		const result = await service.create({ title: "Default Status PRD" });
 
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
@@ -69,12 +69,12 @@ describe("CLI prd create — end-to-end", () => {
 		expect(result.value.status).toBe("todo");
 	});
 
-	it("accepts custom priority", () => {
+	it("accepts custom priority", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const result = service.create({
+		const result = await service.create({
 			title: "Custom PRD",
 			priority: "high",
 		});
@@ -86,12 +86,12 @@ describe("CLI prd create — end-to-end", () => {
 		expect(result.value.status).toBe("todo");
 	});
 
-	it("rejects empty title", () => {
+	it("rejects empty title", async () => {
 		const storeDir = createTestDir();
 		const store = new LocalFileStore(storeDir);
 		const service = new PRDService(store);
 
-		const result = service.create({ title: "  " });
+		const result = await service.create({ title: "  " });
 
 		expect(result.ok).toBe(false);
 		if (result.ok) return;

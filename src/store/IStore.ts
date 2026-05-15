@@ -38,17 +38,17 @@ export interface IStore {
 	/**
 	 * Create a PRD file in the store.
 	 */
-	createPRD(prd: PRD): Result<void, PRDError>;
+	createPRD(prd: PRD): Promise<Result<void, PRDError>>;
 
 	/**
 	 * Read a PRD file from the store.
 	 */
-	readPRD(id: string): Result<PRD, PRDError>;
+	readPRD(id: string): Promise<Result<PRD, PRDError>>;
 
 	/**
 	 * Read all PRD files from the store.
 	 */
-	listPRDs(): Result<PRD[], PRDError>;
+	listPRDs(): Promise<Result<PRD[], PRDError>>;
 
 	/**
 	 * Directory path where the store lives.
@@ -65,22 +65,22 @@ export interface IStore {
 	/**
 	 * Create a task file in the store.
 	 */
-	createTask(task: Task): Result<void, TaskError>;
+	createTask(task: Task): Promise<Result<void, TaskError>>;
 
 	/**
 	 * Update an existing task file in the store (overwrites without checking).
 	 */
-	updateTask(task: Task): Result<void, TaskError>;
+	updateTask(task: Task): Promise<Result<void, TaskError>>;
 
 	/**
 	 * Read a task file from the store.
 	 */
-	readTask(id: string): Result<Task, TaskError>;
+	readTask(id: string): Promise<Result<Task, TaskError>>;
 
 	/**
 	 * Read all task files from the store.
 	 */
-	listTasks(): Result<Task[], TaskError>;
+	listTasks(): Promise<Result<Task[], TaskError>>;
 
 	/**
 	 * Generate the next sequential task ID.
@@ -90,5 +90,5 @@ export interface IStore {
 	/**
 	 * Delete a task file from the store.
 	 */
-	deleteTask(id: string): Result<void, TaskError>;
+	deleteTask(id: string): Promise<Result<void, TaskError>>;
 }

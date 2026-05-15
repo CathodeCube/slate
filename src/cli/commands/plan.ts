@@ -60,7 +60,7 @@ export function planCmd(): Command {
 	cmd.action(async () => {
 		const slate = createSlate(DEFAULT_DIR);
 
-		const listResult = slate.taskList();
+		const listResult = await slate.taskList();
 
 		if (!listResult.ok) {
 			handleError(listResult.error);

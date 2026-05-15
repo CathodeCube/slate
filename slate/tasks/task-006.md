@@ -1,12 +1,14 @@
 ---
 id: task-006
-title: Make IStore async — change all method signatures to return Promise<Result<...>>
-status: todo
+title: >-
+  Make IStore async — change all method signatures to return
+  Promise<Result<...>>
+status: done
 priority: high
 dependencies: []
 prd: prd-002
 created: '2026-05-15T08:23:39.697Z'
-updated: '2026-05-15T08:23:39.697Z'
+updated: '2026-05-15T08:37:14.871Z'
 ---
 
 

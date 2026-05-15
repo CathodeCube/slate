@@ -136,23 +136,7 @@ export class LocalFileStore implements IStore {
 	}
 
 	/**
-	 * Generate the next sequential PRD ID by scanning existing files.
-	 *
-	 * @returns The next available PRD ID (e.g. `prd-004`).
-	 */
-	nextPRDID(): string {
-		this.ensureDir();
-		const prdDir = join(this.#dir, PRD_DIR);
-		return nextSequentialID(prdDir, "prd", PRD_FILE_EXT);
-	}
-
-	// -- PRD operations -------------------------------------------------------
-
-	/**
 	 * Check if a PRD file exists.
-	 *
-	 * @param id - The PRD ID to check.
-	 * @returns True if the PRD file exists, false otherwise.
 	 */
 	existsPRD(id: string): boolean {
 		const prdDir = join(this.#dir, PRD_DIR);
@@ -164,12 +148,23 @@ export class LocalFileStore implements IStore {
 	}
 
 	/**
+	 * Generate the next sequential PRD ID by scanning existing files.
+	 *
+	 * @returns The next available PRD ID (e.g. `prd-004`).
+	 */
+	nextPRDID(): string {
+		this.ensureDir();
+		const prdDir = join(this.#dir, PRD_DIR);
+		return nextSequentialID(prdDir, "prd", PRD_FILE_EXT);
+	}
+
+	/**
 	 * Create a new PRD file in the store.
 	 *
 	 * @param prd - The PRD entity to write.
 	 * @returns Success on write, or `already-exists` if a file with the same ID already exists.
 	 */
-	createPRD(prd: PRD): Result<void, PRDError> {
+	async createPRD(prd: PRD): Promise<Result<void, PRDError>> {
 		this.ensureDir();
 		const prdDir = join(this.#dir, PRD_DIR);
 		const filePath = join(prdDir, `${prd.id}${PRD_FILE_EXT}`);
@@ -197,7 +192,7 @@ export class LocalFileStore implements IStore {
 	 * @param id - The PRD ID to read.
 	 * @returns The parsed PRD entity on success, or an error if the file is missing or corrupted.
 	 */
-	readPRD(id: string): Result<PRD, PRDError> {
+	async readPRD(id: string): Promise<Result<PRD, PRDError>> {
 		const prdDir = join(this.#dir, PRD_DIR);
 		if (!existsSync(prdDir)) {
 			return { ok: false, error: { kind: "not-found", id } };
@@ -217,7 +212,7 @@ export class LocalFileStore implements IStore {
 	 *
 	 * @returns All PRD entities sorted by ID, or an empty array if the directory does not exist.
 	 */
-	listPRDs(): Result<PRD[], PRDError> {
+	async listPRDs(): Promise<Result<PRD[], PRDError>> {
 		const prdDir = join(this.#dir, PRD_DIR);
 		const entities = listEntities(prdDir, PRD_FILE_EXT, prdFrontmatterSchema);
 		return {
@@ -234,7 +229,7 @@ export class LocalFileStore implements IStore {
 	 * @param id - The task ID to delete.
 	 * @returns Success on deletion, or `not-found` if the task does not exist.
 	 */
-	deleteTask(id: string): Result<void, TaskError> {
+	async deleteTask(id: string): Promise<Result<void, TaskError>> {
 		const taskDir = join(this.#dir, TASK_DIR);
 		if (!existsSync(taskDir)) {
 			return { ok: false, error: { kind: "not-found", id } };
@@ -276,7 +271,7 @@ export class LocalFileStore implements IStore {
 	 * @param task - The task entity to write.
 	 * @returns Success on write, or `already-exists` if a file with the same ID already exists.
 	 */
-	createTask(task: Task): Result<void, TaskError> {
+	async createTask(task: Task): Promise<Result<void, TaskError>> {
 		this.ensureTaskDir();
 		const taskDir = join(this.#dir, TASK_DIR);
 		const filePath = join(taskDir, `${task.id}${TASK_FILE_EXT}`);
@@ -294,7 +289,7 @@ export class LocalFileStore implements IStore {
 	 * @param task - The task entity to write.
 	 * @returns Always succeeds — the caller is responsible for ensuring the task exists.
 	 */
-	updateTask(task: Task): Result<void, TaskError> {
+	async updateTask(task: Task): Promise<Result<void, TaskError>> {
 		this.ensureTaskDir();
 		const taskDir = join(this.#dir, TASK_DIR);
 		const filePath = join(taskDir, `${task.id}${TASK_FILE_EXT}`);
@@ -340,7 +335,7 @@ export class LocalFileStore implements IStore {
 	 * @param id - The task ID to read.
 	 * @returns The parsed task entity on success, or an error if the file is missing or corrupted.
 	 */
-	readTask(id: string): Result<Task, TaskError> {
+	async readTask(id: string): Promise<Result<Task, TaskError>> {
 		const taskDir = join(this.#dir, TASK_DIR);
 		if (!existsSync(taskDir)) {
 			return { ok: false, error: { kind: "not-found", id } };
@@ -365,7 +360,7 @@ export class LocalFileStore implements IStore {
 	 *
 	 * @returns All task entities sorted by ID, or an empty array if the directory does not exist.
 	 */
-	listTasks(): Result<Task[], TaskError> {
+	async listTasks(): Promise<Result<Task[], TaskError>> {
 		const taskDir = join(this.#dir, TASK_DIR);
 		return {
 			ok: true,

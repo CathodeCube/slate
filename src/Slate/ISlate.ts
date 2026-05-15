@@ -72,7 +72,7 @@ export interface ISlate {
 	prdCreate(params: {
 		title: string;
 		priority?: "high" | "medium" | "low";
-	}): Result<PRD, SlateError>;
+	}): Promise<Result<PRD, SlateError>>;
 
 	/**
 	 * Read a PRD by ID.
@@ -80,14 +80,14 @@ export interface ISlate {
 	 * @param id - The PRD ID to read.
 	 * @returns The PRD entity on success, or a `SlateError` if not found or corrupted.
 	 */
-	prdRead(id: string): Result<PRD, SlateError>;
+	prdRead(id: string): Promise<Result<PRD, SlateError>>;
 
 	/**
 	 * List all PRDs.
 	 *
 	 * @returns All PRD entities on success, or a `SlateError` if the store is invalid.
 	 */
-	prdList(): Result<PRD[], SlateError>;
+	prdList(): Promise<Result<PRD[], SlateError>>;
 
 	// -- Task operations ------------------------------------------------------
 
@@ -108,7 +108,7 @@ export interface ISlate {
 		status?: "todo" | "in-progress" | "done" | "blocked";
 		dependencies?: string[];
 		prd?: string;
-	}): Result<Task, SlateError>;
+	}): Promise<Result<Task, SlateError>>;
 
 	/**
 	 * Read a task by ID.
@@ -116,7 +116,7 @@ export interface ISlate {
 	 * @param id - The task ID to read.
 	 * @returns The task entity on success, or a `SlateError` if not found or corrupted.
 	 */
-	taskRead(id: string): Result<Task, SlateError>;
+	taskRead(id: string): Promise<Result<Task, SlateError>>;
 
 	/**
 	 * List all tasks, optionally filtered.
@@ -124,7 +124,7 @@ export interface ISlate {
 	 * @param filter - Optional filter function applied to all tasks.
 	 * @returns All matching task entities on success, or a `SlateError` if the store is invalid.
 	 */
-	taskList(filter?: TaskQueryFilter): Result<Task[], SlateError>;
+	taskList(filter?: TaskQueryFilter): Promise<Result<Task[], SlateError>>;
 
 	/**
 	 * Update a task's status, priority, and/or title.
@@ -143,7 +143,7 @@ export interface ISlate {
 			priority?: "high" | "medium" | "low";
 			title?: string;
 		},
-	): Result<void, SlateError>;
+	): Promise<Result<void, SlateError>>;
 
 	/**
 	 * Resolve (mark as done) a task by ID.
@@ -152,7 +152,7 @@ export interface ISlate {
 	 * @param id - The task ID to resolve.
 	 * @returns The resolve result with unblocked task IDs on success, or a `SlateError`.
 	 */
-	taskResolve(id: string): Result<ResolveResult, SlateError>;
+	taskResolve(id: string): Promise<Result<ResolveResult, SlateError>>;
 
 	/**
 	 * Delete a task by ID.
@@ -160,5 +160,5 @@ export interface ISlate {
 	 * @param id - The task ID to delete.
 	 * @returns Success on deletion, or a `SlateError` if the task is not found.
 	 */
-	taskDelete(id: string): Result<void, SlateError>;
+	taskDelete(id: string): Promise<Result<void, SlateError>>;
 }

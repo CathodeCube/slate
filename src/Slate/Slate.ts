@@ -61,44 +61,67 @@ export class Slate implements ISlate {
 	readonly #prds: PRDService;
 
 	/**
-	 * Service for task operations.
+	 * Deferred task service initialization promise.
+	 * TaskService requires listing all tasks at construction time, which is now async.
 	 */
-	readonly #tasks: TaskService;
+	readonly #tasksPromise: Promise<TaskService>;
 
 	constructor(opts: SlateOptions) {
 		this.#store = new LocalFileStore(opts.dir);
 		this.#prds = new PRDService(this.#store);
-		const tasksResult = this.#store.listTasks();
+		this.#tasksPromise = this.#initTasks();
+	}
+
+	/**
+	 * Initialize the TaskService by listing all tasks and building the dependency index.
+	 * This is deferred to avoid requiring an async constructor.
+	 */
+	async #initTasks(): Promise<TaskService> {
+		const tasksResult = await this.#store.listTasks();
 		if (!tasksResult.ok) {
 			throw new SlateConstructionError(mapTaskError(tasksResult.error));
 		}
 		const index = buildDependencyIndex(tasksResult.value);
-		this.#tasks = new TaskService(this.#store, index);
+		return new TaskService(this.#store, index);
+	}
+
+	/**
+	 * Get the initialized TaskService, initializing it if necessary.
+	 */
+	async #getTasks(): Promise<TaskService> {
+		if (!this.#tasksPromise) {
+			throw new SlateConstructionError({
+				kind: "task-directory-invalid",
+				path: (this.#store as LocalFileStore).dir,
+				reason: "TaskService not yet initialized",
+			});
+		}
+		return this.#tasksPromise;
 	}
 
 	// -- PRD operations -------------------------------------------------------
 
-	prdCreate(params: {
+	async prdCreate(params: {
 		title: string;
 		priority?: "high" | "medium" | "low";
-	}): Result<PRD, SlateError> {
-		const result = this.#prds.create(params);
+	}): Promise<Result<PRD, SlateError>> {
+		const result = await this.#prds.create(params);
 		if (!result.ok) {
 			return { ok: false, error: mapPRDError(result.error) };
 		}
 		return result;
 	}
 
-	prdRead(id: string): Result<PRD, SlateError> {
-		const result = this.#prds.read(id);
+	async prdRead(id: string): Promise<Result<PRD, SlateError>> {
+		const result = await this.#prds.read(id);
 		if (!result.ok) {
 			return { ok: false, error: mapPRDError(result.error) };
 		}
 		return result;
 	}
 
-	prdList(): Result<PRD[], SlateError> {
-		const result = this.#prds.list();
+	async prdList(): Promise<Result<PRD[], SlateError>> {
+		const result = await this.#prds.list();
 		if (!result.ok) {
 			return { ok: false, error: mapPRDError(result.error) };
 		}
@@ -107,30 +130,35 @@ export class Slate implements ISlate {
 
 	// -- Task operations ------------------------------------------------------
 
-	taskCreate(params: {
+	async taskCreate(params: {
 		title: string;
 		priority?: "high" | "medium" | "low";
 		status?: "todo" | "in-progress" | "done" | "blocked";
 		dependencies?: string[];
 		prd?: string;
-	}): Result<Task, SlateError> {
-		const result = this.#tasks.create(params);
+	}): Promise<Result<Task, SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.create(params);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
 	}
 
-	taskRead(id: string): Result<Task, SlateError> {
-		const result = this.#tasks.read(id);
+	async taskRead(id: string): Promise<Result<Task, SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.read(id);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
 	}
 
-	taskList(filter?: TaskQueryFilter): Result<Task[], SlateError> {
-		const result = this.#tasks.list();
+	async taskList(
+		filter?: TaskQueryFilter,
+	): Promise<Result<Task[], SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.list();
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -140,31 +168,34 @@ export class Slate implements ISlate {
 		return result;
 	}
 
-	taskUpdate(
+	async taskUpdate(
 		id: string,
 		updates: {
 			status?: "todo" | "in-progress" | "done" | "blocked";
 			priority?: "high" | "medium" | "low";
 			title?: string;
 		},
-	): Result<void, SlateError> {
-		const result = this.#tasks.update(id, updates);
+	): Promise<Result<void, SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.update(id, updates);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
 	}
 
-	taskResolve(id: string): Result<ResolveResult, SlateError> {
-		const result = this.#tasks.resolve(id);
+	async taskResolve(id: string): Promise<Result<ResolveResult, SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.resolve(id);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
 	}
 
-	taskDelete(id: string): Result<void, SlateError> {
-		const result = this.#tasks.delete(id);
+	async taskDelete(id: string): Promise<Result<void, SlateError>> {
+		const tasks = await this.#getTasks();
+		const result = await tasks.delete(id);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
