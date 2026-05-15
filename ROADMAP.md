@@ -15,7 +15,7 @@ Core library and CLI for issue tracking.
 
 Make Slate useful for AI agents.
 
-- [ ] **Pi extension** — direct tool calls from Pi harness to Slate library
+- ~~[ ] **Pi extension** — direct tool calls from Pi harness to Slate library~~
 - [x] **Task discovery** — `taskList` filter available on library; `slate plan` CLI implemented
 - [x] **Dependency-aware updates** — `taskResolve` marks task done and reports unblocked dependents; CLI `slate task resolve` implemented
 - [x] **CLI workflows** — `slate plan` (show next actionable task) implemented
@@ -26,8 +26,8 @@ Make Slate good for humans too.
 
 - [ ] **TUI** — terminal UI for browsing PRDs and tasks
 - [ ] **Graph view** — dependency visualization
-- [ ] **Extensions API** — documented plugin system for harness-specific integrations
-- [ ] **`slate install <extension>`** — extension discovery and installation
+- ~~[ ] **Extensions API** — documented plugin system for harness-specific integrations~~
+- ~~[ ] **`slate install <extension>`** — extension discovery and installation~~
 
 ## Phase 4: Scale (if needed)
 
@@ -39,6 +39,7 @@ Optimize for larger stores.
 
 ## Out of Scope
 
+- Extensions for agents
 - Remote hosting or sync
 - User accounts or permissions
 - Time tracking or estimates
