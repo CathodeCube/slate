@@ -46,6 +46,8 @@ Run this command to get a full overview of available commands. The output includ
 
 **Key workflow:**
 
+**NEVER EDIT** slate files directly, always use the `slate` CLI.
+
 1. `slate init` — Initialize the `slate/` directory if not already done.
 2. `slate prd create --title "..."` — Create a PRD for the feature.
 3. `slate task create --title "..." --prd <prd-id> --priority high <<EOF` — Create a task with a detailed body.
