@@ -4,7 +4,7 @@
 	"type": "module",
 	"main": "./src/index.ts",
 	"bin": {
-		"slate": "./src/cli/main.ts"
+		"slate": "src/cli/main.ts"
 	},
 	"exports": {
 		".": {
