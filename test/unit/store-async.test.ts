@@ -30,7 +30,7 @@ describe("IStore — async interface contract", () => {
 			created: new Date().toISOString(),
 			updated: new Date().toISOString(),
 		});
-		expect(result).resolves.toHaveProperty("ok", true);
+		await expect(result).resolves.toHaveProperty("ok", true);
 	});
 
 	it("readPRD returns a Promise<Result<PRD, PRDError>>", async () => {
@@ -42,7 +42,7 @@ describe("IStore — async interface contract", () => {
 
 	it("listPRDs returns a Promise<Result<PRD[], PRDError>>", async () => {
 		const result = store.listPRDs();
-		expect(result).resolves.toHaveProperty("ok", true);
+		await expect(result).resolves.toHaveProperty("ok", true);
 	});
 
 	it("nextPRDID is synchronous and returns a string", () => {
@@ -63,7 +63,7 @@ describe("IStore — async interface contract", () => {
 			created: new Date().toISOString(),
 			updated: new Date().toISOString(),
 		});
-		expect(result).resolves.toHaveProperty("ok", true);
+		await expect(result).resolves.toHaveProperty("ok", true);
 	});
 
 	it("updateTask returns a Promise<Result>", async () => {
@@ -76,7 +76,7 @@ describe("IStore — async interface contract", () => {
 			created: new Date().toISOString(),
 			updated: new Date().toISOString(),
 		});
-		expect(result).resolves.toHaveProperty("ok", true);
+		await expect(result).resolves.toHaveProperty("ok", true);
 	});
 
 	it("readTask returns a Promise<Result<Task, TaskError>>", async () => {
@@ -88,7 +88,7 @@ describe("IStore — async interface contract", () => {
 
 	it("listTasks returns a Promise<Result<Task[], TaskError>>", async () => {
 		const result = store.listTasks();
-		expect(result).resolves.toHaveProperty("ok", true);
+		await expect(result).resolves.toHaveProperty("ok", true);
 	});
 
 	it("nextTaskID is synchronous and returns a string", () => {
