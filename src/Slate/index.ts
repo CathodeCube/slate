@@ -4,4 +4,4 @@
  * Exports the `ISlate` interface and `Slate` implementation.
  */
 export type { ISlate, ResolveResult, SlateError } from "./ISlate";
-export { Slate, SlateConstructionError, type SlateOptions } from "./Slate";
+export { Slate, type SlateOptions } from "./Slate";

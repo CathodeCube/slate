@@ -34,7 +34,7 @@ export function taskListCmd(defaultDir: string): Command {
 		"Filter by status (todo, in-progress, done, blocked)",
 	);
 	cmd.action(async (opts: { status?: string }) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 		const listResult = await slate.taskList();
 
 		if (!listResult.ok) {
@@ -99,7 +99,7 @@ export function taskUpdateCmd(defaultDir: string): Command {
 			id: string,
 			opts: { status?: string; priority?: string; title?: string },
 		) => {
-			const slate = createSlate(defaultDir);
+			const slate = await createSlate(defaultDir);
 			const updates: {
 				status?: "todo" | "in-progress" | "done" | "blocked";
 				priority?: "high" | "medium" | "low";
@@ -169,7 +169,7 @@ export function taskCreateCmd(defaultDir: string): Command {
 		"todo",
 	);
 	cmd.action(async (opts) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 
 		const stdinBody = await readStdin();
 
@@ -217,7 +217,7 @@ export function taskResolveCmd(defaultDir: string): Command {
 	cmd.description("Resolve a task (mark as done)");
 	cmd.argument("<id>", "Task ID");
 	cmd.action(async (id: string) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 
 		const result = await slate.taskResolve(id);
 
@@ -253,7 +253,7 @@ export function taskDeleteCmd(defaultDir: string): Command {
 	cmd.description("Delete a task");
 	cmd.argument("<id>", "Task ID");
 	cmd.action(async (id: string) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 
 		const result = await slate.taskDelete(id);
 

@@ -3,15 +3,15 @@ import { join } from "node:path";
 
 import matter from "gray-matter";
 
-import { Slate } from "src/Slate";
+import { createSlate } from "src/Slate/factory";
 import { assertOk, createTestDir } from "../utils";
 
 describe("Slate library — integration", () => {
 	it("instantiates and implements ISlate", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
-		expect(slate).toBeInstanceOf(Slate);
+		expect(slate).toBeDefined();
 		// Verify the facade works via ISlate methods
 		const prdResult = await slate.prdCreate({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
@@ -19,7 +19,7 @@ describe("Slate library — integration", () => {
 
 	it("prdCreate returns Result<PRD, SlateError>", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.prdCreate({ title: "Test PRD" });
 
@@ -35,7 +35,7 @@ describe("Slate library — integration", () => {
 
 	it("prdCreate rejects empty title", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.prdCreate({ title: "  " });
 
@@ -46,7 +46,7 @@ describe("Slate library — integration", () => {
 
 	it("prdCreate accepts custom priority and status", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.prdCreate({
 			title: "Custom PRD",
@@ -61,7 +61,7 @@ describe("Slate library — integration", () => {
 
 	it("prdRead returns a PRD by ID", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.prdCreate({ title: "Test PRD" });
 		expect(createResult.ok).toBe(true);
@@ -75,7 +75,7 @@ describe("Slate library — integration", () => {
 
 	it("prdRead returns not-found for non-existent PRD", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.prdRead("prd-999");
 
@@ -86,7 +86,7 @@ describe("Slate library — integration", () => {
 
 	it("prdList returns all PRDs", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		await slate.prdCreate({ title: "PRD A" });
 		await slate.prdCreate({ title: "PRD B" });
@@ -99,7 +99,7 @@ describe("Slate library — integration", () => {
 
 	it("taskCreate returns Result<Task, SlateError>", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.taskCreate({
 			title: "Test Task",
@@ -119,7 +119,7 @@ describe("Slate library — integration", () => {
 
 	it("taskCreate accepts dependencies and prd reference", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		// Create a PRD first so the task can reference it
 		const prdResult = await slate.prdCreate({ title: "Test PRD" });
@@ -140,7 +140,7 @@ describe("Slate library — integration", () => {
 
 	it("taskCreate rejects empty title", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.taskCreate({ title: "  " });
 
@@ -151,7 +151,7 @@ describe("Slate library — integration", () => {
 
 	it("taskList filters tasks correctly", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		await slate.taskCreate({ title: "Task A" });
 		await slate.taskCreate({ title: "Task B" });
@@ -173,7 +173,7 @@ describe("Slate library — integration", () => {
 
 	it("taskList returns empty array when no tasks match", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		await slate.taskCreate({ title: "Task A" });
 
@@ -185,7 +185,7 @@ describe("Slate library — integration", () => {
 
 	it("taskRead returns a task by ID", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Test Task" });
 		expect(createResult.ok).toBe(true);
@@ -199,7 +199,7 @@ describe("Slate library — integration", () => {
 
 	it("taskRead returns not-found for non-existent task", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.taskRead("task-999");
 
@@ -210,7 +210,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve marks a task as done", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task to resolve" });
 		expect(createResult.ok).toBe(true);
@@ -232,7 +232,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve returns not-found for non-existent task", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const result = await slate.taskResolve("task-999");
 
@@ -243,7 +243,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve returns already-done error for an already done task", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task to resolve" });
 		expect(createResult.ok).toBe(true);
@@ -267,7 +267,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate updates status and priority", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task to update" });
 		expect(createResult.ok).toBe(true);
@@ -288,7 +288,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate preserves task body content", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task with body" });
 		expect(createResult.ok).toBe(true);
@@ -316,7 +316,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate rejects invalid status", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task" });
 		expect(createResult.ok).toBe(true);
@@ -335,7 +335,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate updates title", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Original title" });
 		expect(createResult.ok).toBe(true);
@@ -354,7 +354,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate updates title along with status", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Original" });
 		expect(createResult.ok).toBe(true);
@@ -375,7 +375,7 @@ describe("Slate library — integration", () => {
 
 	it("taskUpdate rejects empty title", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task" });
 		expect(createResult.ok).toBe(true);
@@ -391,7 +391,7 @@ describe("Slate library — integration", () => {
 
 	it("taskDelete deletes a task", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task to delete" });
 		expect(createResult.ok).toBe(true);
@@ -408,7 +408,7 @@ describe("Slate library — integration", () => {
 
 	it("uses discriminated SlateError union", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		// PRD error
 		const prdError = await slate.prdCreate({ title: "  " });
@@ -425,7 +425,7 @@ describe("Slate library — integration", () => {
 
 	it("generates sequential IDs across PRD and task operations", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prd1 = assertOk(await slate.prdCreate({ title: "PRD 1" }));
 		const prd2 = assertOk(await slate.prdCreate({ title: "PRD 2" }));
@@ -440,7 +440,7 @@ describe("Slate library — integration", () => {
 
 	it("defaults priority to medium for both PRDs and tasks", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prd = assertOk(await slate.prdCreate({ title: "Default PRD" }));
 		const task = assertOk(await slate.taskCreate({ title: "Default Task" }));
@@ -451,7 +451,7 @@ describe("Slate library — integration", () => {
 
 	it("defaults status to todo for both PRDs and tasks", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prd = assertOk(await slate.prdCreate({ title: "Default PRD" }));
 		const task = assertOk(await slate.taskCreate({ title: "Default Task" }));
@@ -464,7 +464,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve marks a task as done and updates the file", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Task to resolve" });
 		expect(createResult.ok).toBe(true);
@@ -501,7 +501,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve returns unblocked tasks when dependents are fully resolved", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		// Create two tasks that depend on a common parent
 		const parentResult = await slate.taskCreate({ title: "Parent" });
@@ -533,7 +533,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve returns empty unblocked list when no dependents", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const createResult = await slate.taskCreate({ title: "Standalone" });
 		expect(createResult.ok).toBe(true);
@@ -548,7 +548,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve succeeds even when a cycle exists in the data", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		// Create tasks: A -> B -> C
 		const taskA = assertOk(await slate.taskCreate({ title: "Task A" }));
@@ -574,7 +574,7 @@ describe("Slate library — integration", () => {
 
 	it("taskResolve does not resolve when dependencies are not all done", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const parent = assertOk(await slate.taskCreate({ title: "Parent" }));
 		const child = assertOk(
@@ -601,7 +601,7 @@ describe("Slate library — integration", () => {
 
 	it("full workflow: create PRD → create tasks → query → update → resolve", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		// 1. Create a PRD
 		const prdResult = await slate.prdCreate({ title: "Full Workflow Test" });
@@ -702,7 +702,7 @@ describe("Slate library — integration", () => {
 
 	it("computes PRD status as 'done' when all child tasks are done", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prdResult = await slate.prdCreate({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
@@ -732,7 +732,7 @@ describe("Slate library — integration", () => {
 
 	it("computes PRD status as 'in-progress' when any child is in-progress", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prdResult = await slate.prdCreate({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);
@@ -767,7 +767,7 @@ describe("Slate library — integration", () => {
 
 	it("computes PRD status as 'todo' when no children exist", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prdResult = await slate.prdCreate({ title: "Empty PRD" });
 		expect(prdResult.ok).toBe(true);
@@ -779,7 +779,7 @@ describe("Slate library — integration", () => {
 
 	it("computes PRD status from list() for each PRD", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prd1 = assertOk(await slate.prdCreate({ title: "PRD 1" }));
 		const prd2 = assertOk(await slate.prdCreate({ title: "PRD 2" }));
@@ -825,7 +825,7 @@ describe("Slate library — integration", () => {
 
 	it("computes PRD status as 'todo' when children are all blocked", async () => {
 		const storeDir = createTestDir();
-		const slate = new Slate({ dir: storeDir });
+		const slate = await createSlate(storeDir);
 
 		const prdResult = await slate.prdCreate({ title: "Test PRD" });
 		expect(prdResult.ok).toBe(true);

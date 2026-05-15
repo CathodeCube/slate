@@ -25,7 +25,7 @@ export function prdListCmd(defaultDir: string): Command {
 	const cmd = new Command("list");
 	cmd.description("List PRDs");
 	cmd.action(async () => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 		const listResult = await slate.prdList();
 
 		if (!listResult.ok) {
@@ -69,7 +69,7 @@ export function prdShowCmd(defaultDir: string): Command {
 	cmd.description("Show a PRD's details");
 	cmd.argument("<id>", "PRD ID");
 	cmd.action(async (id: string) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 		const result = await slate.prdRead(id);
 
 		if (!result.ok) {
@@ -110,7 +110,7 @@ export function prdCreateCmd(defaultDir: string): Command {
 		"medium",
 	);
 	cmd.action(async (opts) => {
-		const slate = createSlate(defaultDir);
+		const slate = await createSlate(defaultDir);
 
 		const result = await slate.prdCreate({
 			title: opts.title,

@@ -12,8 +12,14 @@ import { Slate } from "src/Slate/Slate";
  * Create a Slate instance backed by a file-based store.
  *
  * @param dir - Path to the store directory.
- * @returns A new Slate instance.
+ * @returns A promise for a new Slate instance.
  */
-export function createSlate(dir: string): ISlate {
-	return new Slate({ dir });
+export async function createSlate(dir: string): Promise<ISlate> {
+	const result = await Slate.create({ dir });
+	if (!result.ok) {
+		throw new Error(
+			`[slate] Failed to create Slate: ${JSON.stringify(result.error)}`,
+		);
+	}
+	return result.value;
 }

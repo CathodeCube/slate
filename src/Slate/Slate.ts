@@ -42,6 +42,16 @@ export interface SlateOptions {
 }
 
 /**
+ * Error returned when the Slate facade cannot be constructed because the
+ * underlying store is in an invalid state (e.g. tasks cannot be listed).
+ *
+ * Unlike `SlateError` which is returned by individual operations, this error
+ * is returned via `Result` because a failed construction means the entire
+ * facade is unusable.
+ */
+export type SlateConstructionError = SlateError;
+
+/**
  * Slate — the single public entry point for programmatic access to the store.
  *
  * Implements `ISlate` by wiring `LocalFileStore` to `IStore` internally and
@@ -62,41 +72,59 @@ export class Slate implements ISlate {
 
 	/**
 	 * Deferred task service initialization promise.
-	 * TaskService requires listing all tasks at construction time, which is now async.
+	 * TaskService requires listing all tasks at construction time, which is async.
 	 */
 	readonly #tasksPromise: Promise<TaskService>;
 
-	constructor(opts: SlateOptions) {
-		this.#store = new LocalFileStore(opts.dir);
-		this.#prds = new PRDService(this.#store);
-		this.#tasksPromise = this.#initTasks();
+	/**
+	 * Create a new Slate instance asynchronously.
+	 *
+	 * Construction is async because the TaskService requires listing all tasks
+	 * at initialization time, which involves file I/O.
+	 *
+	 * @param opts - The Slate construction options.
+	 * @returns A new Slate instance, or a Result with a SlateConstructionError
+	 *          if the store is in an invalid state.
+	 */
+	static async create(
+		opts: SlateOptions,
+	): Promise<Result<Slate, SlateConstructionError>> {
+		try {
+			const store = new LocalFileStore(opts.dir);
+			const prds = new PRDService(store);
+			const tasksPromise = Slate.#initTasks(store);
+
+			// Try to eagerly initialize tasks — if it fails, return the error
+			await tasksPromise;
+
+			const instance = new Slate(store, prds, tasksPromise);
+			return { ok: true, value: instance };
+		} catch (e) {
+			const error = e as SlateConstructionError;
+			return { ok: false, error };
+		}
 	}
 
 	/**
 	 * Initialize the TaskService by listing all tasks and building the dependency index.
-	 * This is deferred to avoid requiring an async constructor.
 	 */
-	async #initTasks(): Promise<TaskService> {
-		const tasksResult = await this.#store.listTasks();
+	static async #initTasks(store: IStore): Promise<TaskService> {
+		const tasksResult = await store.listTasks();
 		if (!tasksResult.ok) {
-			throw new SlateConstructionError(mapTaskError(tasksResult.error));
+			throw mapTaskError(tasksResult.error);
 		}
 		const index = buildDependencyIndex(tasksResult.value);
-		return new TaskService(this.#store, index);
+		return new TaskService(store, index);
 	}
 
-	/**
-	 * Get the initialized TaskService, initializing it if necessary.
-	 */
-	async #getTasks(): Promise<TaskService> {
-		if (!this.#tasksPromise) {
-			throw new SlateConstructionError({
-				kind: "task-directory-invalid",
-				path: (this.#store as LocalFileStore).dir,
-				reason: "TaskService not yet initialized",
-			});
-		}
-		return this.#tasksPromise;
+	private constructor(
+		store: IStore,
+		prds: PRDService,
+		tasksPromise: Promise<TaskService>,
+	) {
+		this.#store = store;
+		this.#prds = prds;
+		this.#tasksPromise = tasksPromise;
 	}
 
 	// -- PRD operations -------------------------------------------------------
@@ -137,8 +165,9 @@ export class Slate implements ISlate {
 		dependencies?: string[];
 		prd?: string;
 	}): Promise<Result<Task, SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.create(params);
+		const result = await this.#tasksPromise.then((tasks) =>
+			tasks.create(params),
+		);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -146,8 +175,7 @@ export class Slate implements ISlate {
 	}
 
 	async taskRead(id: string): Promise<Result<Task, SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.read(id);
+		const result = await this.#tasksPromise.then((tasks) => tasks.read(id));
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -157,8 +185,7 @@ export class Slate implements ISlate {
 	async taskList(
 		filter?: TaskQueryFilter,
 	): Promise<Result<Task[], SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.list();
+		const result = await this.#tasksPromise.then((tasks) => tasks.list());
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -176,8 +203,9 @@ export class Slate implements ISlate {
 			title?: string;
 		},
 	): Promise<Result<void, SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.update(id, updates);
+		const result = await this.#tasksPromise.then((tasks) =>
+			tasks.update(id, updates),
+		);
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -185,8 +213,7 @@ export class Slate implements ISlate {
 	}
 
 	async taskResolve(id: string): Promise<Result<ResolveResult, SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.resolve(id);
+		const result = await this.#tasksPromise.then((tasks) => tasks.resolve(id));
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
@@ -194,34 +221,11 @@ export class Slate implements ISlate {
 	}
 
 	async taskDelete(id: string): Promise<Result<void, SlateError>> {
-		const tasks = await this.#getTasks();
-		const result = await tasks.delete(id);
+		const result = await this.#tasksPromise.then((tasks) => tasks.delete(id));
 		if (!result.ok) {
 			return { ok: false, error: mapTaskError(result.error) };
 		}
 		return result;
-	}
-}
-
-// ---------------------------------------------------------------------------
-// SlateConstructionError — thrown when the Slate facade cannot initialize
-// ---------------------------------------------------------------------------
-
-/**
- * Error thrown when the Slate facade cannot be constructed because the
- * underlying store is in an invalid state (e.g. tasks cannot be listed).
- *
- * Unlike `SlateError` which is returned by individual operations, this is
- * a thrown exception because a constructor failure means the entire facade
- * is unusable — there is no `Result` to return.
- */
-export class SlateConstructionError extends Error {
-	readonly kind: SlateError["kind"];
-
-	constructor(error: SlateError) {
-		super(`[slate] Failed to initialize: ${JSON.stringify(error)}`);
-		this.name = "SlateConstructionError";
-		this.kind = error.kind;
 	}
 }
 

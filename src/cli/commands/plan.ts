@@ -58,7 +58,7 @@ export function planCmd(): Command {
 	const cmd = new Command("plan");
 	cmd.description("Show the next actionable task");
 	cmd.action(async () => {
-		const slate = createSlate(DEFAULT_DIR);
+		const slate = await createSlate(DEFAULT_DIR);
 
 		const listResult = await slate.taskList();
 

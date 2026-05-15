@@ -1,13 +1,13 @@
 ---
 id: task-008
 title: Make ISlate and Slate async + update CLI commands and tests
-status: todo
+status: done
 priority: high
 dependencies:
   - task-007
 prd: prd-002
 created: '2026-05-15T08:23:54.319Z'
-updated: '2026-05-15T08:23:54.319Z'
+updated: '2026-05-15T09:02:15.093Z'
 ---
 
 
