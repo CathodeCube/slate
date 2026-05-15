@@ -4,6 +4,10 @@
 
 ---
 
+[![CI](https://github.com/cathodecube/slate/actions/workflows/ci.yml/badge.svg)](https://github.com/cathodecube/slate/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/cathodecube/slate?label=version&sort=semver)](https://github.com/cathodecube/slate/releases)
+
 A minimal, agent-native issue tracker.
 
 Slate replaces clunky issue-tracking tools with a clean CLI, a first-class library, and git-friendly markdown files — designed for AI agents first, humans second.

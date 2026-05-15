@@ -20,6 +20,7 @@
 		"start": "bun run src/cli/main.ts",
 		"typecheck": "tsc --noEmit",
 		"format": "find src test -name '*.ts' -print0 | xargs -0 biome check --write --unsafe",
+		"formatcheck": "find src test -name '*.ts' -print0 | xargs -0 biome check --unsafe",
 		"test": "vitest run"
 	},
 	"description": "A minimal, agent-native issue tracker",
